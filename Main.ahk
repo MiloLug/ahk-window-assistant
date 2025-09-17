@@ -2,7 +2,7 @@
 #SingleInstance Force
 Persistent
 InstallKeybdHook()
-SetWinDelay(1)
+SetWinDelay(10)  ; This won't affect such things as moving windows, they invoke delay 0 internally
 CoordMode("Mouse", "Screen")
 
 SetWorkingDir(A_ScriptDir)

@@ -4,9 +4,14 @@
 
 
 class WindowManagerError extends Error {
-    __New() => this
+    __New(message) {
+        super(message)
+    }
 }
 
+/**
+ * @description A helper for invoking and leaving contexts that require setting a flag
+ */
 class CountedFlagInvocation {
     __New(original := 0) {
         this.regTime := A_TickCount
@@ -25,7 +30,12 @@ class CountedFlagInvocation {
     }
 }
 
-
+/**
+ * @description A class to navigate through a collection of windows with Alt-Tab-like behavior
+ * @param {(WindowManager)} windowManager - the window manager to use
+ * @param {(String)} listSelector - the selector to use to get the list of windows
+ * @param {(String)} currentSelector - the selector to use to get the current window
+ */
 class WindowCollectionNavigator {
     __New(windowManager, listSelector:='', currentSelector:='A') {
         this._windowManager := windowManager
@@ -34,29 +44,21 @@ class WindowCollectionNavigator {
         this._listSelector := listSelector
         this._currentSelector := currentSelector
 
-        this._FinishNavigation_Bind := this._FinishNavigation.Bind(this)
+        this._EndNavigation_Bind := this._EndNavigation.Bind(this)
         this._currentN := 1
+        this._activateOnFinish := true
 
         ObjRelease(ObjPtr(this))
     }
 
     __Delete() {
         ObjAddRef(ObjPtr(this))
-        SetTimer(this._FinishNavigation_Bind, 0)
-        this._FinishNavigation_Bind := 0
+        SetTimer(this._EndNavigation_Bind, 0)
+        this._EndNavigation_Bind := 0
     }
 
-    _StartNavigation() {
-        newMap := Map()
+    _UpdateCurrentWindow() {
         currentHwnd := WinGetID(this._currentSelector)
-        newWindows := this._windowManager.GetList(this._listSelector, true)
-        if (newWindows.Length == 0) {
-            this._windows := []
-            this._windowsMap.Clear()
-            return
-        }
-
-        ; Manage current window
         if (this._windowsMap.Has(currentHwnd)) {
             if (this._windows[1] != currentHwnd) {
                 for i, hwnd in this._windows {
@@ -71,21 +73,33 @@ class WindowCollectionNavigator {
             this._windows.InsertAt(1, currentHwnd)
             this._windowsMap[currentHwnd] := true
         }
+    }
+
+    _UpdateWindowsList() {
+        newMap := Map()
+        newWindows := this._windowManager.GetList(this._listSelector, true)
+        if (newWindows.Length == 0) {
+            this._windows := []
+            this._windowsMap.Clear()
+            return
+        }
 
         ; Add new windows
-        newOffset := 1
-
+        toAdd := []
         for windowHwnd in newWindows {
             newMap[windowHwnd] := true
             if (!this._windowsMap.Has(windowHwnd)) {
-                newOffset++
-                this._windows.InsertAt(2, windowHwnd)
+                toAdd.Push(windowHwnd)
             }
+        }
+        if (toAdd.Length > 0) {
+            this._windows.InsertAt(2, toAdd*)
         }
 
         ; Remove old windows
         i := this._windows.Length
-        while (i > newOffset) {
+        lastNewI := toAdd.Length + 1
+        while (i > lastNewI) {
             if (!newMap.Has(this._windows[i])) {
                 this._windows.RemoveAt(i)
             }
@@ -94,30 +108,44 @@ class WindowCollectionNavigator {
         this._windowsMap := newMap
     }
 
+    _GetSelected() {
+        return this._windows[Mod(this._currentN - 1, this._windows.Length) + 1]
+    }
+
     /**
      * @description Navigate to the next window
+     * @param {(Boolean)} instant - if true, the window will be activated immediately
      */
     Next(instant:=true) {
-        SetTimer(this._FinishNavigation_Bind, 0)
+        SetTimer(this._EndNavigation_Bind, 0)
         if (this._currentN == 1) {
-            this._StartNavigation()
+            this._UpdateCurrentWindow()
+            this._UpdateWindowsList()
+
+            if (this._windows.Length == 0) {
+                return
+            }
         }
         this._currentN++
-        SetTimer(this._FinishNavigation_Bind, 500)
+        this._activateOnFinish := !instant
         if (instant) {
-            WinActivate(this._windows[Mod(this._currentN - 1, this._windows.Length) + 1])
+            WinActivate(this._GetSelected())
         }
+        SetTimer(this._EndNavigation_Bind, 500)
     }
 
     /**
      * @description Called after we stop navigating to reset the state
      */
-    _FinishNavigation() {
+    _EndNavigation() {
+        if (this._activateOnFinish) {
+            WinActivate(this._GetSelected())
+        }
         this._currentN := 1
     }
 }
 
-class LazyWindowManager {
+class CslWindowManager {
     __New() {
         this._eventManager := 0
         this._messenger := 0
@@ -137,6 +165,7 @@ class LazyWindowManager {
         ; { windowHwnd: CountedFlagInvocation }
         this._topmostWindowsInvocations := Map()
         this._maximizedWindowsInvocations := Map()
+        this._lowWinDelayInvocation := 0
 
         this._cleanDanglingObjects_Bind := this._CleanDanglingObjects.Bind(this)
         this._nonInteractiveFilter := TitleFilter([
@@ -166,6 +195,7 @@ class LazyWindowManager {
         this._maximizedWindowsInvocations.Clear()
         this._navigators.Clear()
     }
+
 
     /**
      * @description Get the window ID of a window or 0 if the window is non-interactive or doesn't exist
@@ -287,9 +317,8 @@ class LazyWindowManager {
     }
 
     RegisterEventManager(eventManager) {
-        if (this._eventManager != 0) {
+        if (this._eventManager != 0)
             throw WindowManagerError("Event manager already registered")
-        }
         this._eventManager := eventManager
 
         DllCall("RegisterShellHookWindow", "UInt", A_ScriptHwnd)
@@ -309,10 +338,7 @@ class LazyWindowManager {
      *         shouldStop(title) => Boolean
      */
     StartMouseWindowFreeDrag(windowHwnd, shouldStop) {
-        minMax := WinGetMinMax(windowHwnd)
-
-        ; We shouldn't move minimized windows
-        if (minMax == -1)
+        if ((minMax := WinGetMinMax(windowHwnd)) == WIN_MINIMIZED)
             return
 
         MouseGetPos(&mouseX1, &mouseY1)
@@ -336,6 +362,7 @@ class LazyWindowManager {
         }
 
         this.InvokeAlwaysOnTop(windowHwnd)
+        this.InvokeLowWinDelay()
         loop {
             if (shouldStop(windowHwnd))
                 break
@@ -348,26 +375,11 @@ class LazyWindowManager {
 
             WinMove(windowX1 + mouseX2, windowY1 + mouseY2,,, windowHwnd)
         }
+        this.LeaveLowWinDelay()
         this.LeaveAlwaysOnTop(windowHwnd)
-        this.LeaveWinRestored(windowHwnd)
+        if (minMax != WIN_RESTORED)
+            this.LeaveWinRestored(windowHwnd)
         this._freeDraggingWindowHwnd := 0
-    }
-
-    SendSizeUpdated(windowHwnd, width, height) {
-        SendMessage(WM_SIZE, 0, (width & 0xFFFF) | ((height & 0xFFFF) << 16), , windowHwnd)
-    }
-
-    SendCalcSize(windowHwnd, left, top, right, bottom) {
-        rect := Buffer(16)
-        NumPut(
-            "Int", left,
-            "Int", top,
-            "Int", right,
-            "Int", bottom,
-            rect
-        )
-        ;SendMessage(WM_SIZING, 0, rect,, windowHwnd)
-        SendMessage(WM_NCCALCSIZE, 0, rect,, windowHwnd)
     }
 
     /**
@@ -379,8 +391,7 @@ class LazyWindowManager {
      *         shouldStop(title) => Boolean
      */
     StartMouseWindowFreeResize(windowHwnd, shouldStop) {
-        ; We shouldn't move maximized windows
-        if WinGetMinMax(windowHwnd)
+        if WinGetMinMax(windowHwnd) != WIN_RESTORED
             return
         MouseGetPos(&mouseX1, &mouseY1)
         WinGetPos(&windowX1, &windowY1, &windowW1, &windowH1, windowHwnd)
@@ -433,12 +444,12 @@ class LazyWindowManager {
                 windowHwnd
             )
             ; TODO: I'm not sure if this works or IF IT'S NEEDED AT ALL. Need to fix the painting issue when resizing somehow
-            this.SendCalcSize(windowHwnd, windowX2, windowY2, windowX2 + windowW2, windowY2 + windowH2)
+            WinCalls.SendWmNccalcsize(windowHwnd, windowX2, windowY2, windowX2 + windowW2, windowY2 + windowH2)
             PostMessage(WM_PAINT,,, , windowHwnd)
         }
         this.LeaveAlwaysOnTop(windowHwnd)
         SendMessage(WM_EXITSIZEMOVE, 0, 0, , windowHwnd)
-        this.SendSizeUpdated(windowHwnd, windowW2, windowH2)
+        WinCalls.SendWmSize(windowHwnd, windowW2, windowH2)
         this._freeResizingWindowHwnd := 0
     }
 
@@ -462,18 +473,16 @@ class LazyWindowManager {
             return false
 
         try {
-            res := SendMessage(WM_NCHITTEST, 0, (x & 0xFFFF) | ((y & 0xFFFF) << 16),, windowHwnd)
+            res := WinCalls.SendWmNchittest(windowHwnd, x, y)
         } catch {
             return false
         }
-        if (res == HTCAPTION or res == HTBORDER) {
+        if (res == HTCAPTION or res == HTBORDER)
             return true
-        }
 
         WinGetPos(&windowX, &windowY, &windowW, &windowH, windowHwnd)
-        if ((x > windowX and x < windowX + windowW) and (y > windowY and y < windowY + windowHeaderSize)) {
+        if ((x > windowX and x < windowX + windowW) and (y > windowY and y < windowY + windowHeaderSize))
             return true
-        }
     }
 
     IsAlwaysOnTop(windowHwnd) {
@@ -481,7 +490,7 @@ class LazyWindowManager {
     }
 
     /**
-     * @description Invoke always on top for a window when dragging, resizing, etc.
+     * @description Invoke always-on-top for a window when dragging, resizing, etc.
      * @param {(Integer)} windowHwnd
      */
     InvokeAlwaysOnTop(windowHwnd) {
@@ -536,6 +545,16 @@ class LazyWindowManager {
         WinSetAlwaysOnTop(state, windowHwnd)
     }
 
+    /**
+     * @description Invoke a state where the window is restored (not maximized or minimized)
+     * 
+     * **WHY**: In some cases, just using restore and returning the original state can go contrary to what user
+     *   or other parts of the code do with the window.
+     *   
+     * For example, if the user maximizes while dragging. Why? Just because they can
+     * 
+     * @param windowHwnd - the window to invoke the state for
+     */
     InvokeWinRestored(windowHwnd) {
         invocation := this._maximizedWindowsInvocations.Get(windowHwnd, 0)
         if (invocation == 0) {
@@ -554,7 +573,11 @@ class LazyWindowManager {
             return
         }
         if (invocation.Leave()) {
-            if (invocation.original != WIN_RESTORED and !invocation.external)
+            if (
+                invocation.original != WIN_RESTORED
+                and !invocation.external
+                and WinGetMinMax(windowHwnd) == WIN_RESTORED
+            )
                 this.SetMinMax(windowHwnd, invocation.original)
             this._maximizedWindowsInvocations.Delete(windowHwnd)
         }
@@ -586,6 +609,31 @@ class LazyWindowManager {
         }
     }
 
+    /**
+     * @description Invoke a state where A_WinDelay is 0
+     * 
+     * **WHY**: Not all cases by far require a 0 delay to look good,
+     *   for example, resizing is horrible with such a low delay
+     */
+    InvokeLowWinDelay() {
+        if (this._lowWinDelayInvocation == 0) {
+            this._lowWinDelayInvocation := CountedFlagInvocation(A_WinDelay)
+            SetWinDelay(0)
+        } else {
+            this._lowWinDelayInvocation.Invoke()
+        }
+    }
+
+    LeaveLowWinDelay() {
+        if (this._lowWinDelayInvocation == 0)
+            return
+        if (this._lowWinDelayInvocation.Leave()) {
+            if (A_WinDelay == 0)  ; if it's not 0, probably managed by something else
+                SetWinDelay(this._lowWinDelayInvocation.original)
+            this._lowWinDelayInvocation := 0
+        }
+    }
+
     _CleanDanglingObjects() {
         toDelete := []
         for windowHwnd, state in this._topmostWindowsInvocations {
@@ -599,6 +647,8 @@ class LazyWindowManager {
             this._topmostWindowsInvocations.Delete(windowHwnd)
         }
     }
+
+    ; TODO: All these WinGet<Side> are complete garbage rn
 
     /**
      * @description Get the window to the left of the mouse cursor

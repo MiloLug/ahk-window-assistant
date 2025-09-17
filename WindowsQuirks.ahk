@@ -44,7 +44,6 @@ UseFlashFocusWindows(focusTitles, dontStealMouse:=true) {
                 MoveMouseToWindow(hwnd)
                 OutputDebug("Focused new window " hwnd)
             }
-        } catch {
         }
     }
 }

@@ -2,14 +2,17 @@
 ;   VirtualDesktopAccessor.dll (https://github.com/Ciantic/VirtualDesktopAccessor)
 
 #include Constants.ahk
+#include Utils.ahk
 
 
 class VirtualDesktopError extends Error {
-    __New() => this
+    __New(message) {
+        super(message)
+    }
 }
 
 
-class LazyVirtualDesktopManager {
+class ClsVirtualDesktopManager {
     __New() {
         try {
             this._hVD := DllCall("LoadLibrary", "Str", A_ScriptDir . "\VirtualDesktopAccessor.dll", "Ptr")
@@ -142,7 +145,7 @@ class LazyVirtualDesktopManager {
         ; TODO: Change this after bugfix in the DLL | Search project for #DLLBUG-1
 
         if (!this._DesktopChangeChecker_Binds.Has(processHwnd)) {
-            ChangeWindowMessageFilterEx(processHwnd, MSG_VIRTUAL_DESKTOP_MENAGER, MSGFLT_ALLOW)
+            WinCalls.ChangeWindowMessageFilterEx(processHwnd, MSG_VIRTUAL_DESKTOP_MENAGER, MSGFLT_ALLOW)
             SetTimer(
                 this._DesktopChangeChecker_Binds[processHwnd] := this._DesktopChangeChecker.Bind(this, processHwnd),
                 100
@@ -165,7 +168,7 @@ class LazyVirtualDesktopManager {
         if (this._DesktopChangeChecker_Binds.Has(processHwnd)) {
             SetTimer(this._DesktopChangeChecker_Binds[processHwnd], 0)
             this._DesktopChangeChecker_Binds.Delete(processHwnd)
-            ChangeWindowMessageFilterEx(processHwnd, MSG_VIRTUAL_DESKTOP_MENAGER, MSGFLT_RESET)
+            WinCalls.ChangeWindowMessageFilterEx(processHwnd, MSG_VIRTUAL_DESKTOP_MENAGER, MSGFLT_RESET)
         }
 
         ; res := DllCall(this._hProcUnregisterPostMessageHook, "Ptr", processHwnd, "Int")

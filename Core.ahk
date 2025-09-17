@@ -5,9 +5,9 @@
 #Include WindowManager.ahk
 
 
-eventManager := EventBus()
-desktopManager := LazyVirtualDesktopManager()
-windowManager := LazyWindowManager()
+eventManager := ClsEventBus()
+desktopManager := ClsVirtualDesktopManager()
+windowManager := CslWindowManager()
 
 windowManager.RegisterEventManager(eventManager)
 desktopManager.RegisterEventManager(eventManager)

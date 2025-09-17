@@ -1,7 +1,8 @@
 #Requires AutoHotkey v2.0
 
 
-class EventBus {
+; TODO: Maybe... I don't really need to complicate things to this extent???
+class ClsEventBus {
     __New() {
         ; { eventId: { (originalHandler): { once: bool } } }
         this._events := Map()
@@ -68,17 +69,25 @@ class EventBus {
     }
 }
 
-; Can be modified to get output from multiple input devices
-; In AHK v2.1 the WM_INPUT message can be registered to a custom GUI, not the script itself (to prevent conflicts)
+/**
+ * @description A class to hook the mouse raw input - {@link https://www.autohotkey.com/boards/viewtopic.php?t=134109|author and details}
+ * It gives only offsets, not absolute coordinates. For coordinates, call MouseGetPos()
+ * @param {(FuncObj)} Callback - the callback to call when the mouse raw input is received
+ * @param {(Integer)} EventType - the event type to hook
+ *  - 1 = only mouse movement
+ *  - 2 = only mouse clicks
+ *  - 3 = both events
+ * @param {(Integer)} UsagePage - HID Usage Page (1 = Generic Desktop Controls)
+ * @param {(Integer)} UsageId - HID Usage ID (2 = Mouse, 6 = Keyboard within page 1)
+ */
 class MouseRawInputHook {
-    ; EventType 1 = only mouse movement, 2 = only mouse clicks, 3 = both events
     __New(Callback, EventType:=3, UsagePage:=1, UsageId:=2) {
         static DevSize := 8 + A_PtrSize, RIDEV_INPUTSINK := 0x00000100
         this.RAWINPUTDEVICE := Buffer(DevSize, 0), this.EventType := EventType
         this.__Callback := this.__MouseRawInputProc.Bind(this), this.Callback := Callback
         NumPut("UShort", UsagePage, "UShort", UsageId, "UInt", RIDEV_INPUTSINK, "Ptr", A_ScriptHwnd, this.RAWINPUTDEVICE)
         DllCall("RegisterRawInputDevices", "Ptr", this.RAWINPUTDEVICE, "UInt", 1, "UInt", DevSize)
-        OnMessage(0x00FF, this.__Callback)
+        OnMessage(WM_INPUT, this.__Callback)
         ObjRelease(ObjPtr(this)) ; Otherwise this object can't be destroyed because of the BoundFunc above
     }
     __Delete() {
@@ -86,7 +95,7 @@ class MouseRawInputHook {
         NumPut("Uint", RIDEV_REMOVE, this.RAWINPUTDEVICE, 4)
         DllCall("RegisterRawInputDevices", "Ptr", this.RAWINPUTDEVICE, "UInt", 1, "UInt", DevSize)
         ObjAddRef(ObjPtr(this))
-        OnMessage(0x00FF, this.__Callback, 0)
+        OnMessage(WM_INPUT, this.__Callback, 0)
         this.__Callback := 0
     }
     __MouseRawInputProc(wParam, lParam, *) {

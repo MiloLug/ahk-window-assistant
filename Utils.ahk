@@ -194,35 +194,33 @@ class TitleFilter {
     }
 }
 
-ChangeWindowMessageFilterEx(hwnd, message, action) {
-    return DllCall("ChangeWindowMessageFilterEx", "Ptr", hwnd, "UInt", message, "UInt", action, "Ptr", 0, "Int")
-}
 
-DescribeWindow(hwnd) {
+DebugDescribeWindow(hwnd) {
     return WinGetTitle(hwnd) " (" hwnd "), class: " WinGetClass(hwnd) ", PID: " WinGetPID(hwnd)
 }
 
-/**
- * @description A class to handle sequential key/shortcut activations
- * It works like an abstract alt-tab, giving the number of current activation and some special case
- * for single activation (for example, -1)
- * 
- * @param {(Number)} period - the period in milliseconds to reset the counter
- * @param {(Function)} specialCase - the value to return when pressed only once
- */
-class SequenceIntervalHandler {
-    __New(period:=500) {
-        this._period := period
-        this._counter := 0
-        this._lastActivationTime := 0
+class WinCalls {
+    static ChangeWindowMessageFilterEx(hwnd, message, action) {
+        return DllCall("ChangeWindowMessageFilterEx", "Ptr", hwnd, "UInt", message, "UInt", action, "Ptr", 0, "Int")
     }
 
-    Next() {
-        dT := A_TickCount - this._lastActivationTime
-        this._lastActivationTime := A_TickCount
-        if (dT > this._period) {
-            this._counter := 0
-        }
-        return ++this._counter
+    static SendWmSize(windowHwnd, width, height) {
+        SendMessage(WM_SIZE, 0, (width & 0xFFFF) | ((height & 0xFFFF) << 16), , windowHwnd)
+    }
+
+    static SendWmNccalcsize(windowHwnd, left, top, right, bottom) {
+        rect := Buffer(16)
+        NumPut(
+            "Int", left,
+            "Int", top,
+            "Int", right,
+            "Int", bottom,
+            rect
+        )
+        SendMessage(WM_NCCALCSIZE, 0, rect,, windowHwnd)
+    }
+
+    static SendWmNchittest(windowHwnd, x, y) {
+        return SendMessage(WM_NCHITTEST, 0, (x & 0xFFFF) | ((y & 0xFFFF) << 16),, windowHwnd)
     }
 }
