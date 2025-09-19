@@ -3,7 +3,7 @@
 #include Constants.ahk
 
 
-class WindowManagerError extends Error {
+class ClsWindowManagerError extends Error {
     __New(message) {
         super(message)
     }
@@ -12,7 +12,7 @@ class WindowManagerError extends Error {
 /**
  * @description A helper for invoking and leaving contexts that require setting a flag
  */
-class CountedFlagInvocation {
+class ClsCountedFlagInvocation {
     __New(original := 0) {
         this.regTime := A_TickCount
         this.i := 1
@@ -36,7 +36,7 @@ class CountedFlagInvocation {
  * @param {(String)} listSelector - the selector to use to get the list of windows
  * @param {(String)} currentSelector - the selector to use to get the current window
  */
-class WindowCollectionNavigator {
+class ClsSequenceWindowNavigator {
     __New(windowManager, listSelector:='', currentSelector:='A') {
         this._windowManager := windowManager
         this._windows := []
@@ -142,6 +142,21 @@ class WindowCollectionNavigator {
             WinActivate(this._GetSelected())
         }
         this._currentN := 1
+    }
+}
+
+/**
+ * this will be the HJKL navigator, to go to top/bottom/left/right of the current window
+ * 
+ * possible algos:
+ * 
+ * - like right now, modified distance equation
+ * - another one - check biggest overlaps with a 'vision cone' (not really a cone, but a square), avoid z-index navigation if windows overlap.
+ *   E.g. if one window is 20% overlapping the plane of the current one, projected below it, and another one is 50%,
+ *   then wi select the second one
+ */
+class ClsSpatialWindowNavigator {
+    __New() {
     }
 }
 
@@ -318,7 +333,7 @@ class CslWindowManager {
 
     RegisterEventManager(eventManager) {
         if (this._eventManager != 0)
-            throw WindowManagerError("Event manager already registered")
+            throw ClsWindowManagerError("Event manager already registered")
         this._eventManager := eventManager
 
         DllCall("RegisterShellHookWindow", "UInt", A_ScriptHwnd)
@@ -499,7 +514,7 @@ class CslWindowManager {
         ; and the window being set to top temporarily, for example, when dragging a window
         state := this._topmostWindowsInvocations.Get(windowHwnd, 0)
         if (state == 0) {
-            state := CountedFlagInvocation(this.IsAlwaysOnTop(windowHwnd))
+            state := ClsCountedFlagInvocation(this.IsAlwaysOnTop(windowHwnd))
             this._topmostWindowsInvocations[windowHwnd] := state
             if (!state.original)
                 WinSetAlwaysOnTop(1, windowHwnd)
@@ -558,7 +573,7 @@ class CslWindowManager {
     InvokeWinRestored(windowHwnd) {
         invocation := this._maximizedWindowsInvocations.Get(windowHwnd, 0)
         if (invocation == 0) {
-            invocation := CountedFlagInvocation(WinGetMinMax(windowHwnd))
+            invocation := ClsCountedFlagInvocation(WinGetMinMax(windowHwnd))
             this._maximizedWindowsInvocations[windowHwnd] := invocation
             if (invocation.original != WIN_RESTORED)
                 WinRestore(windowHwnd)
@@ -617,7 +632,7 @@ class CslWindowManager {
      */
     InvokeLowWinDelay() {
         if (this._lowWinDelayInvocation == 0) {
-            this._lowWinDelayInvocation := CountedFlagInvocation(A_WinDelay)
+            this._lowWinDelayInvocation := ClsCountedFlagInvocation(A_WinDelay)
             SetWinDelay(0)
         } else {
             this._lowWinDelayInvocation.Invoke()
@@ -829,7 +844,7 @@ class CslWindowManager {
             return this._navigators[exeSelector]
         } else {
             return (
-                this._navigators[exeSelector] := WindowCollectionNavigator(this, exeSelector)
+                this._navigators[exeSelector] := ClsSequenceWindowNavigator(this, exeSelector)
             )
         }
     }
