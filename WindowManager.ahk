@@ -57,9 +57,14 @@ class ClsSequenceWindowNavigator {
         this._EndNavigation_Bind := 0
     }
 
+    /**
+     * @description Update the current window
+     * Should be called before updating the list for optimal performance
+     */
     _UpdateCurrentWindow() {
         currentHwnd := WinGetID(this._currentSelector)
         if (this._windowsMap.Has(currentHwnd)) {
+            ; Since it's already in the list, we can just move it to the front
             if (this._windows[1] != currentHwnd) {
                 for i, hwnd in this._windows {
                     if (hwnd == currentHwnd) {
@@ -75,6 +80,10 @@ class ClsSequenceWindowNavigator {
         }
     }
 
+    /**
+     * @description Update the list of windows
+     * Updates the list in a natural way, so the order of the windows is preserved as much as possible.
+     */
     _UpdateWindowsList() {
         newMap := Map()
         newWindows := this._windowManager.GetList(this._listSelector, true)
@@ -83,6 +92,9 @@ class ClsSequenceWindowNavigator {
             this._windowsMap.Clear()
             return
         }
+        ; if we have at least one window, consider it 'current' and don't move it around
+        ; this way, if it's 0, we'll insert new windows at the beginning, otherwise at index = 2
+        hasCurrent := this._windows.Length > 0
 
         ; Add new windows
         toAdd := []
@@ -93,12 +105,15 @@ class ClsSequenceWindowNavigator {
             }
         }
         if (toAdd.Length > 0) {
-            this._windows.InsertAt(2, toAdd*)
+            ; 1st being the current window, so we will navigate to
+            ; the new windows next
+            this._windows.InsertAt(1 + hasCurrent, toAdd*)
         }
 
         ; Remove old windows
         i := this._windows.Length
-        lastNewI := toAdd.Length + 1
+        ; skip since we already know new windows exist
+        lastNewI := toAdd.Length + hasCurrent
         while (i > lastNewI) {
             if (!newMap.Has(this._windows[i])) {
                 this._windows.RemoveAt(i)
@@ -135,7 +150,7 @@ class ClsSequenceWindowNavigator {
     }
 
     /**
-     * @description Called after we stop navigating to reset the state
+     * @description Called after we stop navigating, to reset the state
      */
     _EndNavigation() {
         if (this._activateOnFinish) {
@@ -215,6 +230,9 @@ class ClsSpatialWindowNavigator {
         closest := [0xFFFFFFFF, 0]
 
         for data in distnaces {
+            ; We search for the smallest distance, and overlapping windows have negative distance,
+            ; so the more they overlap, the smaller (bigger negative) the distance.
+            ; And then not overlapping windows will be the next closest candidates
             if (data[1] < closest[1]) {
                 closest := data
             }
@@ -307,7 +325,10 @@ class ClsSpatialWindowNavigator {
         return this._GetFromSide(3)
     }
 
-    NextOverlapping(minOverlap:=0) {
+    /**
+     * @description Find the next overlapping window in Z-order
+     */
+    NextOverlapping() {
         try {
             curHwnd := this._windowManager.GetID(this._currentSelector)
         } catch {
