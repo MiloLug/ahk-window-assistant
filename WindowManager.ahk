@@ -145,18 +145,193 @@ class ClsSequenceWindowNavigator {
     }
 }
 
-/**
- * this will be the HJKL navigator, to go to top/bottom/left/right of the current window
- * 
- * possible algos:
- * 
- * - like right now, modified distance equation
- * - another one - check biggest overlaps with a 'vision cone' (not really a cone, but a square), avoid z-index navigation if windows overlap.
- *   E.g. if one window is 20% overlapping the plane of the current one, projected below it, and another one is 50%,
- *   then wi select the second one
- */
+
 class ClsSpatialWindowNavigator {
-    __New() {
+    __New(windowManager, listSelector:='', currentSelector:='A') {
+        this._windowManager := windowManager
+        this._listSelector := listSelector
+        this._currentSelector := currentSelector
+    }
+
+    _CalcLogicalDistance(x1, y1, x2, y2, xCost:=1, yCost:=1) {
+        dX := (x1 - x2) * xCost
+        dY := (y1 - y2) * yCost
+        return Sqrt(dX * dX + dY * dY)
+    }
+
+    _GetCoords(hwnd, &w, &h, &l, &r, &t, &b) {
+        WinCalls.WinGetPosEx(hwnd, &l, &t, &w, &h, &r, &b)
+    }
+
+    /**
+     * @description
+     * ```
+     *      |         |
+     *     sXY1......sXY2
+     *      |         |
+     * dir  |      ---|----- r
+     *  |   |     |   |     |
+     *  |   |     |   |     |
+     *      |      ---|-----
+     *      |         |
+     * ```
+     * Calculates the distance between the s plane and r rectangle.
+     * If they intersect, the distance is negative, otherwise - positive.
+     * 
+     * S defined by:
+     *     points 1 (sX1, sY1) and 2 (sX2, sY2) for two boundaries
+     *     direction - vertical or horizontal
+     * 
+     * R defined by:
+     *     Top-Left point (rX1, rY1) and Bottom-Right point (rX2, rY2)
+     * 
+     * Returns the LENGTH of the intersection
+     * 
+     * @param {(Integer)} sX1
+     * @param {(Integer)} sY1
+     * @param {(Integer)} sX2
+     * @param {(Integer)} sY2
+     * @param {(Integer)} sDir - vertical or horizontal
+     *   - 0 - horizontal
+     *   - 1 - vertical
+     * @param {(Integer)} rX1 - Top-Left point
+     * @param {(Integer)} rY1 - Top-Left point
+     * @param {(Integer)} rX2 - Bottom-Right point
+     * @param {(Integer)} rY2 - Bottom-Right point
+     */
+    _CalcIntersectionDistance(sX1, sY1, sX2, sY2, sDir, rX1, rY1, rX2, rY2) {
+        return (
+            sDir == 0
+                ? (rY1 < sY1 ? sY1 : rY1) - (rY2 < sY2 ? rY2 : sY2)
+                : (rX1 < sX1 ? sX1 : rX1) - (rX2 < sX2 ? rX2 : sX2)
+        )
+    }
+
+    /**
+     * @description Find the closest window in the list
+     * @param {(Array)} distnaces - array of [distance, windowHwnd]
+     */
+    _FindClosest(distnaces) {
+        closest := [0xFFFFFFFF, 0]
+
+        for data in distnaces {
+            if (data[1] < closest[1]) {
+                closest := data
+            }
+        }
+
+        return closest[2]
+    }
+
+    /**
+     * @description Get the closest window from a side
+     * @param {(Integer)} side - the side to get the closest window from
+     *   - `0` - left
+     *   - `1` - right
+     *   - `2` - top
+     *   - `3` - bottom
+     */
+    _GetFromSide(side) {
+        try {
+            curHwnd := this._windowManager.GetID(this._currentSelector)
+        } catch {
+            return 0
+        }
+        this._GetCoords(curHwnd, &w, &h, &l, &r, &t, &b)
+
+        winList := this._windowManager.GetList(this._listSelector)
+        if (winList.Length == 0)
+            return 0
+
+        distances := []
+
+        ; I know, this is ugly, but it's faster than assigning a filter function to each side
+        switch side {
+            case 0:
+                for winHwnd in winList {
+                    this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
+                    if (wR <= l)
+                        distances.Push([
+                            this._CalcIntersectionDistance(l, t, r, b, 0, wL, wT, wR, wB),
+                            winHwnd
+                        ])
+                }
+            case 1:
+                for winHwnd in winList {
+                    this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
+                    if (wL >= r)
+                        distances.Push([
+                            this._CalcIntersectionDistance(l, t, r, b, 0, wL, wT, wR, wB),
+                            winHwnd
+                        ])
+                }
+            case 2:
+                for winHwnd in winList {
+                    this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
+                    if (wB <= t)
+                        distances.Push([
+                            this._CalcIntersectionDistance(l, t, r, b, 1, wL, wT, wR, wB),
+                            winHwnd
+                        ])
+                }
+            case 3:
+                for winHwnd in winList {
+                    this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
+                    if (wT >= b)
+                        distances.Push([
+                            this._CalcIntersectionDistance(l, t, r, b, 1, wL, wT, wR, wB),
+                            winHwnd
+                        ])
+                }
+        }
+
+        if (distances.Length == 0)
+            return 0
+
+        return this._FindClosest(distances)
+    }
+
+    GetLeft() {
+        return this._GetFromSide(0)
+    }
+
+    GetRight() {
+        return this._GetFromSide(1)
+    }
+
+    GetTop() {
+        return this._GetFromSide(2)
+    }
+
+    GetBottom() {
+        return this._GetFromSide(3)
+    }
+
+    NextOverlapping(minOverlap:=0) {
+        try {
+            curHwnd := this._windowManager.GetID(this._currentSelector)
+        } catch {
+            return 0
+        }
+        this._GetCoords(curHwnd, &w, &h, &l, &r, &t, &b)
+
+        winList := this._windowManager.GetList(this._listSelector)
+        if (winList.Length == 0)
+            return 0
+
+        for winHwnd in ArrReversedIter(winList) {
+            this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
+            if (
+                winHwnd != curHwnd
+                and wL <= r and wR >= l and wT <= b and wB >= t
+                ; to avoid overlapping with neighboring windows
+                and wL != r and wT != b and wR != l and wB != t
+            ) {
+                OutputDebug("Overlapping window: " winHwnd)
+                return winHwnd
+            }
+        }
+        return 0
     }
 }
 
@@ -193,6 +368,7 @@ class CslWindowManager {
             "!ahk_class Windows.UI.Core.CoreWindow",  ; exclude the start menu, search, etc.
         ])
         this._navigators := Map()
+        this.spatialNavigator := ClsSpatialWindowNavigator(this)
 
         SetTimer(this._cleanDanglingObjects_Bind, 5000)
         ObjRelease(ObjPtr(this))
@@ -364,16 +540,16 @@ class CslWindowManager {
         ; for example, to move it to another screen
         if (minMax != WIN_RESTORED) {
             this.InvokeWinRestored(windowHwnd)
-            MouseGetPos(&mouseX1, &mouseY1)
             WinGetPos(&windowX1R, &windowY1R, &windowW1R, &windowH1R, windowHwnd)
 
+            ; Mouse position in the resized window
             mouseX1Win := (mouseX1 - windowX1) / windowW1 * windowW1R
             mouseY1Win := (mouseY1 - windowY1) / windowH1 * windowH1R
 
-            mouseX1 := windowX1R + mouseX1Win
-            mouseY1 := windowY1R + mouseY1Win
-            windowX1 := windowX1R
-            windowY1 := windowY1R
+            windowX1 := mouseX1 - mouseX1Win
+            windowY1 := mouseY1 - mouseY1Win
+
+            WinMove(windowX1, windowY1,,, windowHwnd)
         }
 
         this.InvokeAlwaysOnTop(windowHwnd)
@@ -661,176 +837,6 @@ class CslWindowManager {
         for windowHwnd in toDelete {
             this._topmostWindowsInvocations.Delete(windowHwnd)
         }
-    }
-
-    ; TODO: All these WinGet<Side> are complete garbage rn
-
-    /**
-     * @description Get the window to the left of the mouse cursor
-     * @returns {(Integer)} windowHwnd, 0 if no window is found
-     */
-    WinGetLeft() {
-        try {
-            curHwnd := WinGetID("A")
-        } catch {
-            return 0
-        }
-        WinGetPos(&curX, &curY, &curWinW, &curWinH, curHwnd)
-        cX := curX + curWinW / 2
-        cY := curY + curWinH / 2
-
-        winList := WinGetList()
-        if (winList.Length == 0)
-            return 0
-
-        closestHwnd := 0
-        closestD := 0xFFFF
-
-        for winHwnd in winList {
-            if (winHwnd == curHwnd or winHwnd == 0)
-                continue
-            WinGetPos(&winX, &winY, &winW, &winH, winHwnd)
-            winX := winX + winW / 2
-            winY := winY + winH / 2
-            if (winX < cX and this.IsInteractiveWindow(winHwnd)) {
-                d := this._CalcHLogicalDistance(winX, winY, cX, cY)
-                if (d < closestD) {
-                    closestHwnd := winHwnd
-                    closestD := d
-                }
-            }
-        }
-
-        return closestHwnd
-    }
-
-    _CalcHLogicalDistance(x1, y1, x2, y2) {
-        dX := (x1 - x2) / 10
-        dY := (y1 - y2) / 10 * 8
-        return Sqrt(dX * dX + dY * dY)
-    }
-
-    _CalcVLogicalDistance(x1, y1, x2, y2) {
-        dX := (x1 - x2) * 8
-        dY := y1 - y2
-        return Sqrt(dX * dX + dY * dY)
-    }
-
-    /**
-     * @description Get the window to the right of the current window
-     * @returns {(Integer)} windowHwnd, 0 if no window is found
-     */
-    WinGetRight() {
-        try {
-            curHwnd := WinGetID("A")
-        } catch {
-            return 0
-        }
-        WinGetPos(&curX, &curY, &curWinW, &curWinH, curHwnd)
-        cX := curX + curWinW / 2
-        cY := curY + curWinH / 2
-
-        winList := WinGetList()
-        if (winList.Length == 0)
-            return 0
-
-        closestHwnd := 0
-        closestD := 0xFFFF
-
-        for winHwnd in winList {
-            if (winHwnd == curHwnd)
-                continue
-            WinGetPos(&winX, &winY, &winW, &winH, winHwnd)
-            winX := winX + winW / 2
-            winY := winY + winH / 2
-            if (winX > cX and this.IsInteractiveWindow(winHwnd)) {
-                d := this._CalcHLogicalDistance(winX, winY, cX, cY)
-                if (d < closestD) {
-                    closestHwnd := winHwnd
-                    closestD := d
-                }
-            }
-        }
-
-        return closestHwnd
-    }
-
-    /**
-     * @description Get the window to the top of the current window
-     * @returns {(Integer)} windowHwnd, 0 if no window is found
-     */
-    WinGetTop() {
-        try {
-            curHwnd := WinGetID("A")
-        } catch {
-            return 0
-        }
-        WinGetPos(&curX, &curY, &curWinW, &curWinH, curHwnd)
-        cX := curX + curWinW / 2
-        cY := curY + curWinH / 2
-
-        winList := WinGetList()
-        if (winList.Length == 0)
-            return 0
-
-        closestHwnd := 0
-        closestD := 0xFFFF
-
-        for winHwnd in winList {
-            if (winHwnd == curHwnd or winHwnd == 0)
-                continue
-            WinGetPos(&winX, &winY, &winW, &winH, winHwnd)
-            winX := winX + winW / 2
-            winY := winY + winH / 2
-            if (winY < cY and this.IsInteractiveWindow(winHwnd)) {
-                d := this._CalcVLogicalDistance(winX, winY, cX, cY)
-                if (d < closestD) {
-                    closestHwnd := winHwnd
-                    closestD := d
-                }
-            }
-        }
-
-        return closestHwnd
-    }
-
-    /**
-     * @description Get the window to the bottom of the current window
-     * @returns {(Integer)} windowHwnd, 0 if no window is found
-     */
-    WinGetBottom() {
-        try {
-            curHwnd := WinGetID("A")
-        } catch {
-            return 0
-        }
-        WinGetPos(&curX, &curY, &curWinW, &curWinH, curHwnd)
-        cX := curX + curWinW / 2
-        cY := curY + curWinH / 2
-
-        winList := WinGetList()
-        if (winList.Length == 0)
-            return 0
-
-        closestHwnd := 0
-        closestD := 0xFFFF
-        
-        for winHwnd in winList {
-            if (winHwnd == curHwnd or winHwnd == 0)
-                continue
-            WinGetPos(&winX, &winY, &winW, &winH, winHwnd)
-            winX := winX + winW / 2
-            winY := winY + winH / 2
-            if (winY > cY and this.IsInteractiveWindow(winHwnd)) {
-                d := this._CalcVLogicalDistance(winX, winY, cX, cY)
-                if (d < closestD) {
-                    closestHwnd := winHwnd
-                    closestD := d
-                }
-            }
-        }
-
-        return closestHwnd
     }
 
     /**

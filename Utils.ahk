@@ -46,6 +46,13 @@ IterKeys(iterable) {
     return (&key) => it(&key)
 }
 
+ArrReversedIter(arr) {
+    i := arr.Length
+    return (&val) => (
+        i > 0 ? (val := arr[i--], true): false
+    )
+}
+
 
 /**
  * @description A class to filter windows by titles (class|exe|id)
@@ -222,5 +229,39 @@ class WinCalls {
 
     static SendWmNchittest(windowHwnd, x, y) {
         return SendMessage(WM_NCHITTEST, 0, (x & 0xFFFF) | ((y & 0xFFFF) << 16),, windowHwnd)
+    }
+
+    static WinGetPosEx(windowHwnd, &x:=0, &y:=0, &width:=0, &height:=0, &right:=0, &bottom:=0, getOffset:=false, &offsetX:=0, &offsetY:=0, &offsetRight:=0, &offsetBottom:=0) {
+        rect := Buffer(16,0)
+        try {
+            DllCall(
+                "dwmapi\DwmGetWindowAttribute",
+                "Ptr",  windowHwnd,                  ; hwnd
+                "UInt", DWMWA_EXTENDED_FRAME_BOUNDS, ; dwAttribute
+                "Ptr",  rect,                        ; pvAttribute
+                "UInt", 16,                          ; cbAttribute
+                "UInt"
+            )
+        } catch {
+            return false
+        }
+        ; Populate the output variables
+        x := NumGet(rect,  0, "Int")
+        y := NumGet(rect,  4, "Int")
+        right := NumGet(rect,  8, "Int")
+        bottom := NumGet(rect, 12, "Int")
+        width := (right - x)
+        height := (bottom - y)
+
+        if (getOffset) {
+            gwrRect := Buffer(16, 0)
+            DllCall("GetWindowRect", "Ptr", windowHwnd,"Ptr", gwrRect)
+
+            ; Calculate offsets and update output variables
+            offsetX := x - NumGet(gwrRect,0,"Int")
+            offsetY := y - NumGet(gwrRect,4,"Int")
+            offsetRight := NumGet(gwrRect,8,"Int") - right
+            offsetBottom := NumGet(gwrRect,12,"Int") - bottom
+        }
     }
 }

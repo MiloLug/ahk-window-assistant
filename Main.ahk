@@ -74,6 +74,7 @@ UseDesktopChangeAsMouseMove()
 !h::GoToLeftWindow()
 !k::GoToTopWindow()
 !j::GoToBottomWindow()
+!i::GoToNextOverlappingWindow()
 
 
 !+Tab::windowManager.GetAppNavigator().Next()

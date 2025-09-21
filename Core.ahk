@@ -69,25 +69,31 @@ MoveMouseToWindow(windowHwnd) {
 }
 
 GoToLeftWindow() {
-    windowHwnd := windowManager.WinGetLeft()
+    windowHwnd := windowManager.spatialNavigator.GetLeft()
     if (windowHwnd != 0) {
         WinActivate(windowHwnd)
     }
 }
 GoToRightWindow() {
-    windowHwnd := windowManager.WinGetRight()
+    windowHwnd := windowManager.spatialNavigator.GetRight()
     if (windowHwnd != 0) {
         WinActivate(windowHwnd)
     }
 }
 GoToTopWindow() {
-    windowHwnd := windowManager.WinGetTop()
+    windowHwnd := windowManager.spatialNavigator.GetTop()
     if (windowHwnd != 0) {
         WinActivate(windowHwnd)
     }
 }
 GoToBottomWindow() {
-    windowHwnd := windowManager.WinGetBottom()
+    windowHwnd := windowManager.spatialNavigator.GetBottom()
+    if (windowHwnd != 0) {
+        WinActivate(windowHwnd)
+    }
+}
+GoToNextOverlappingWindow() {
+    windowHwnd := windowManager.spatialNavigator.NextOverlapping()
     if (windowHwnd != 0) {
         WinActivate(windowHwnd)
     }
