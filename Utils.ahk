@@ -1,57 +1,6 @@
 #Requires AutoHotkey v2.0
 
-ArrConcat(arr1, arr2) {
-    ret := arr1.Clone()
-    for item in arr2 {
-        ret.Push(item)
-    }
-    return ret
-}
-
-Iter(iterable, mode:=1) {
-    return HasMethod(iterable, "__Enum") ? iterable.__Enum(mode) : iterable
-}
-
-IterMap(iterable, func) {
-    it := Iter(iterable)
-    return (&item) => (
-        res := it(&item), res and (item := func(res)),
-        res
-    )
-}
-
-ArrFlatMap(iterable, func) {
-    ret := []
-
-    for item in iterable {
-        ret.Push(func(item)*)
-    }
-    return ret
-}
-
-IterJoin(iterable, separator) {
-    it := Iter(iterable)
-    if (!it(&item))
-        return ""
-
-    ret := "" item
-    for item in it {
-        ret .= separator item
-    }
-    return ret
-}
-
-IterKeys(iterable) {
-    it := Iter(iterable, 2)
-    return (&key) => it(&key)
-}
-
-ArrReversedIter(arr) {
-    i := arr.Length
-    return (&val) => (
-        i > 0 ? (val := arr[i--], true): false
-    )
-}
+#include IterUtils.ahk
 
 
 /**
@@ -115,6 +64,7 @@ class TitleFilter {
             return
         }
 
+        ; Init map with all prefixes to avoid checking the keys later (performance)
         for prefix in TitleFilter._allPrefixes {
             this._titlesMap[prefix] := Map()
         }
@@ -133,7 +83,7 @@ class TitleFilter {
             parsed := StrSplit(title, " ", " ", 2)
             if (parsed.Length == 2) {
                 if (!TitleFilter._allPrefixes.Has(parsed[1])) {
-                    throw ValueError("Invalid prefix: '" parsed[1] "'")
+                    throw ValueError("Invalid prefix: '" parsed[1] "'. Allowed prefixes: " IterJoin(IterKeys(TitleFilter._allPrefixes), ", "))
                 }
 
                 ; if the prefix is ahk_id or !ahk_id, just use hwnd
@@ -231,6 +181,32 @@ class WinCalls {
         return SendMessage(WM_NCHITTEST, 0, (x & 0xFFFF) | ((y & 0xFFFF) << 16),, windowHwnd)
     }
 
+    /**
+     * @description Get the position and size of a window with extended frame bounds
+     * 
+     * The built-in WinGetPos() function doesn't return the right window size in some cases. This is due to some windows quirks when it comes to the frame bounds.
+     * But then, to correctly move a window, we need to know the "wrong" values, that's why there are offsets.
+     * 
+     * {@link https://www.autohotkey.com/boards/viewtopic.php?f=6&t=3392|READ MORE (orig author: jballi)}
+     * 
+     * Here it returns the real (visible) window X, Y, width and height, right and bottom coordinates.
+     * 
+     * @param {(Integer)} windowHwnd
+     * @param {(Integer)} x
+     * @param {(Integer)} y
+     * @param {(Integer)} width
+     * @param {(Integer)} height
+     * @param {(Integer)} right
+     * @param {(Integer)} bottom
+     * @param {(Boolean)} getOffset - if true, the offset of the window will be calculated
+     *   - Has some overhead, it retrieves more data from the system to calculate the offsets.
+     *   - This is useful if you want to move the window by a certain amount of pixels.
+     * @param {(Integer)} offsetX
+     * @param {(Integer)} offsetY
+     * @param {(Integer)} offsetRight
+     * @param {(Integer)} offsetBottom
+     * @returns {(Boolean)} - true if the position and size were successfully retrieved, false otherwise
+     */
     static WinGetPosEx(windowHwnd, &x:=0, &y:=0, &width:=0, &height:=0, &right:=0, &bottom:=0, getOffset:=false, &offsetX:=0, &offsetY:=0, &offsetRight:=0, &offsetBottom:=0) {
         rect := Buffer(16,0)
         try {
@@ -245,6 +221,7 @@ class WinCalls {
         } catch {
             return false
         }
+
         ; Populate the output variables
         x := NumGet(rect,  0, "Int")
         y := NumGet(rect,  4, "Int")
@@ -263,5 +240,6 @@ class WinCalls {
             offsetRight := NumGet(gwrRect,8,"Int") - right
             offsetBottom := NumGet(gwrRect,12,"Int") - bottom
         }
+        return true
     }
 }

@@ -136,8 +136,8 @@ class ClsVirtualDesktopManager {
         realCurrent := DllCall(this._hProcGetCurrentDesktopNumber, "Int")
         if (realCurrent != this._tmpCurrentDesktop) {
             ; Only the message handler should set currentDesktop, so use another variable here
-            this._tmpCurrentDesktop := realCurrent
             PostMessage(MSG_VIRTUAL_DESKTOP_MENAGER, this._tmpCurrentDesktop, realCurrent, , hwnd)
+            this._tmpCurrentDesktop := realCurrent
         }
     }
 
@@ -152,7 +152,7 @@ class ClsVirtualDesktopManager {
             )
         }
         
-        ; Right now the event manager of the accessor is broken in Admin mode, so I use a polyfill
+        ; Right now the event manager of the accessor is broken when run as Admin, so I use this polyfill
         
         ; if (res != 1) {
         ;     throw VirtualDesktopError("Failed to change window message filter")

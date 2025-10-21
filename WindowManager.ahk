@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 
 #include Constants.ahk
+#include Geometry.ahk
 
 
 class ClsWindowManagerError extends Error {
@@ -161,11 +162,22 @@ class ClsSequenceWindowNavigator {
 }
 
 
+/**
+ * @description A class to navigate through a collection of windows with spatial behavior
+ * @param {(WindowManager)} windowManager - the window manager to use
+ * @param {(String)} listSelector - the selector to use to get the list of windows
+ * @param {(String)} currentSelector - the selector to use to get the current window
+ * @param {(Float)} intersectionThreshold - the threshold for considering a window as intersecting with the current window. The check is:
+ * 
+ *         Sqrt(intersectionArea) / Sqrt(window1Area + window2Area) > intersectionThreshold
+ */
 class ClsSpatialWindowNavigator {
-    __New(windowManager, listSelector:='', currentSelector:='A') {
+    __New(windowManager, listSelector:='', currentSelector:='A', intersectionThreshold:=0.1) {
         this._windowManager := windowManager
         this._listSelector := listSelector
         this._currentSelector := currentSelector
+        this._currentHwnd := 0
+        this._intersectionThreshold := intersectionThreshold
     }
 
     _CalcLogicalDistance(x1, y1, x2, y2, xCost:=1, yCost:=1) {
@@ -179,66 +191,78 @@ class ClsSpatialWindowNavigator {
     }
 
     /**
-     * @description
-     * ```
-     *      |         |
-     *     sXY1......sXY2
-     *      |         |
-     * dir  |      ---|----- r
-     *  |   |     |   |     |
-     *  |   |     |   |     |
-     *      |      ---|-----
-     *      |         |
-     * ```
-     * Calculates the distance between the s plane and r rectangle.
-     * If they intersect, the distance is negative, otherwise - positive.
-     * 
-     * S defined by:
-     *     points 1 (sX1, sY1) and 2 (sX2, sY2) for two boundaries
-     *     direction - vertical or horizontal
-     * 
-     * R defined by:
-     *     Top-Left point (rX1, rY1) and Bottom-Right point (rX2, rY2)
-     * 
-     * Returns the LENGTH of the intersection
-     * 
-     * @param {(Integer)} sX1
-     * @param {(Integer)} sY1
-     * @param {(Integer)} sX2
-     * @param {(Integer)} sY2
-     * @param {(Integer)} sDir - vertical or horizontal
-     *   - 0 - horizontal
-     *   - 1 - vertical
-     * @param {(Integer)} rX1 - Top-Left point
-     * @param {(Integer)} rY1 - Top-Left point
-     * @param {(Integer)} rX2 - Bottom-Right point
-     * @param {(Integer)} rY2 - Bottom-Right point
+     * @description Traverse to the nearest topmost window by going upwards through overlapping windows
+     * @param {(Array)} distList - array of [distance-from-point, windowHwnd, left, right, top, bottom, width, height]
+     * @param {(Integer)} currentIndex - the index of the current window in the list
      */
-    _CalcIntersectionDistance(sX1, sY1, sX2, sY2, sDir, rX1, rY1, rX2, rY2) {
-        return (
-            sDir == 0
-                ? (rY1 < sY1 ? sY1 : rY1) - (rY2 < sY2 ? rY2 : sY2)
-                : (rX1 < sX1 ? sX1 : rX1) - (rX2 < sX2 ? rX2 : sX2)
-        )
+    _TraverseToNearestTopmost(distList, currentIndex) {
+        current := distList[currentIndex]
+        currentArea := current[7] * current[8]
+
+        nearestDistance := 0xFFFFFFFF
+        nearestIndex := currentIndex
+
+        i := currentIndex - 1
+        while (i > 0) {
+            checking := distList[i]
+            interArea := Geometry.GetIntersectionArea(
+                current[3], current[5], current[4], current[6],
+                checking[3], checking[5], checking[4], checking[6]
+            )
+            checkingArea := checking[7] * checking[8]
+            if (
+                interArea > 0
+                and Sqrt(interArea) / Sqrt(checkingArea + currentArea) > this._intersectionThreshold
+                and checking[1] < nearestDistance
+            ) {
+                nearestDistance := checking[1]
+                nearestIndex := i
+            }
+            i--
+        }
+
+        ; If it's still the same window or the first one, then there are no more overlapping windows
+        if (nearestIndex == currentIndex || nearestIndex == 1) {
+            return distList[nearestIndex][2]
+        }
+
+        ; We can go to the next overlapping window
+        if (nearestIndex > 0) {
+            return this._TraverseToNearestTopmost(distList, nearestIndex)
+        }
+
+        return 0
     }
 
     /**
      * @description Find the closest window in the list
-     * @param {(Array)} distnaces - array of [distance, windowHwnd]
+     * @param {(Array)} distList - array of [distance-from-point, windowHwnd, left, right, top, bottom, width, height]
      */
-    _FindClosest(distnaces) {
-        closest := [0xFFFFFFFF, 0]
+    _TraverseToNearest(distList) {
+        nearestDistance := 0xFFFFFFFF
+        nearestIndex := 0
 
-        for data in distnaces {
+        for i, checking in distList {
             ; We search for the smallest distance, and overlapping windows have negative distance,
             ; so the more they overlap, the smaller (bigger negative) the distance.
             ; And then not overlapping windows will be the next closest candidates
-            if (data[1] < closest[1]) {
-                closest := data
+            if (checking[1] < nearestDistance) {
+                nearestDistance := checking[1]
+                nearestIndex := i
             }
         }
 
-        return closest[2]
+        if (nearestIndex > 1) {
+            ; Most likely, we want to move to the nearest AND topmost window.
+            ; So we need to go through the list of windows on top of the current closest
+            return this._TraverseToNearestTopmost(distList, nearestIndex)
+        }
+
+        if (nearestIndex == 1) {
+            return distList[1][2]
+        }
+
+        return 0
     }
 
     /**
@@ -270,8 +294,9 @@ class ClsSpatialWindowNavigator {
                     this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
                     if (wR <= l)
                         distances.Push([
-                            this._CalcIntersectionDistance(l, t, r, b, 0, wL, wT, wR, wB),
-                            winHwnd
+                            Geometry.CalcIntersectionDistance(l, t, r, b, 0, wL, wT, wR, wB),
+                            winHwnd,
+                            wL, wR, wT, wB, wW, wH
                         ])
                 }
             case 1:
@@ -279,8 +304,9 @@ class ClsSpatialWindowNavigator {
                     this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
                     if (wL >= r)
                         distances.Push([
-                            this._CalcIntersectionDistance(l, t, r, b, 0, wL, wT, wR, wB),
-                            winHwnd
+                            Geometry.CalcIntersectionDistance(l, t, r, b, 0, wL, wT, wR, wB),
+                            winHwnd,
+                            wL, wR, wT, wB, wW, wH
                         ])
                 }
             case 2:
@@ -288,8 +314,9 @@ class ClsSpatialWindowNavigator {
                     this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
                     if (wB <= t)
                         distances.Push([
-                            this._CalcIntersectionDistance(l, t, r, b, 1, wL, wT, wR, wB),
-                            winHwnd
+                            Geometry.CalcIntersectionDistance(l, t, r, b, 1, wL, wT, wR, wB),
+                            winHwnd,
+                            wL, wR, wT, wB, wW, wH
                         ])
                 }
             case 3:
@@ -297,8 +324,9 @@ class ClsSpatialWindowNavigator {
                     this._GetCoords(winHwnd, &wW, &wH, &wL, &wR, &wT, &wB)
                     if (wT >= b)
                         distances.Push([
-                            this._CalcIntersectionDistance(l, t, r, b, 1, wL, wT, wR, wB),
-                            winHwnd
+                            Geometry.CalcIntersectionDistance(l, t, r, b, 1, wL, wT, wR, wB),
+                            winHwnd,
+                            wL, wR, wT, wB, wW, wH
                         ])
                 }
         }
@@ -306,7 +334,7 @@ class ClsSpatialWindowNavigator {
         if (distances.Length == 0)
             return 0
 
-        return this._FindClosest(distances)
+        return this._TraverseToNearest(distances)
     }
 
     GetLeft() {
@@ -412,9 +440,10 @@ class CslWindowManager {
     /**
      * @description Get the window ID of a window or 0 if the window is non-interactive or doesn't exist
      * @param {(String)} ahkWindowTitle
+     * @param {(Boolean)} detectHidden
      */
-    GetID(ahkWindowTitle, hidden:=false) {
-        if (hidden) {
+    GetID(ahkWindowTitle, detectHidden:=false) {
+        if (detectHidden) {
             prevDetectHidden := A_DetectHiddenWindows
             DetectHiddenWindows(1)
         }
@@ -423,7 +452,7 @@ class CslWindowManager {
             if (this.IsInteractiveWindow(id))
                 return id
         } finally {
-            if (hidden) {
+            if (detectHidden) {
                 DetectHiddenWindows(prevDetectHidden)
             }
         }
@@ -433,10 +462,10 @@ class CslWindowManager {
     /**
      * @description Get the list of window IDs of a window or an empty array if the window is non-interactive or doesn't exist
      * @param {(String)} ahkWindowTitle
-     * @param {(Boolean)} hidden
+     * @param {(Boolean)} detectHidden
      */
-    GetList(ahkWindowTitle:='', hidden:=false) {
-        if (hidden) {
+    GetList(ahkWindowTitle:='', detectHidden:=false) {
+        if (detectHidden) {
             prevDetectHidden := DetectHiddenWindows(1)
         }
         list := WinGetList(ahkWindowTitle)
@@ -447,7 +476,7 @@ class CslWindowManager {
                 res.Push(id)
         }
 
-        if (hidden) {
+        if (detectHidden) {
             DetectHiddenWindows(prevDetectHidden)
         }
         return res

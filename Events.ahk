@@ -71,6 +71,7 @@ class ClsEventBus {
 
 /**
  * @description A class to hook the mouse raw input - {@link https://www.autohotkey.com/boards/viewtopic.php?t=134109|author and details}
+ * 
  * It gives only offsets, not absolute coordinates. For coordinates, call MouseGetPos()
  * @param {(FuncObj)} Callback - the callback to call when the mouse raw input is received
  * @param {(Integer)} EventType - the event type to hook
