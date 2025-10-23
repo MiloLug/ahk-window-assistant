@@ -10,7 +10,7 @@
  *   - `"ahk_exe <exe>"`
  *   - `"ahk_class <class>"`
  *   - `"ahk_id <id>" | (Integer)`: Integer is recommended
- *   - `"!<prefix> <key>"`: exclude windows with the given prefix and key
+ *   - `"!<prefix> <key>"`: exclude windows with given prefix and key
  * @example Some filters
  *   - TitleFilter(["*"]): match all windows
  *   - TitleFilter(["ahk_exe explorer.exe"]): match all windows of explorer.exe
@@ -49,7 +49,11 @@ class TitleFilter {
         }
     }
 
-    DebugString() {
+    /**
+     * @description Convert the filter to a readable string
+     * @returns {(String)}
+     */
+    ToDebugString() {
         ret := this._matchAll ? "*`n" : ""
         for prefix, titles in this._titlesMap {
             if (titles.Count == 0)

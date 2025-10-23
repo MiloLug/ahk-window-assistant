@@ -13,8 +13,8 @@ windowManager.RegisterEventManager(eventManager)
 desktopManager.RegisterEventManager(eventManager)
 
 
-SetNonInteractiveWindowsFilter(filter) {
-    windowManager.SetNonInteractiveWindowsFilter(filter)
+SetInteractableWindowsFilter(filter) {
+    windowManager.SetInteractableWindowsFilter(filter)
 }
 
 

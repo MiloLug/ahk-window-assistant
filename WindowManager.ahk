@@ -407,7 +407,7 @@ class CslWindowManager {
         this._lowWinDelayInvocation := 0
 
         this._cleanDanglingObjects_Bind := this._CleanDanglingObjects.Bind(this)
-        this._nonInteractiveFilter := TitleFilter([
+        this._interactableFilter := TitleFilter([
             "*",
             "!ahk_class XamlExplorerHostIslandWindow",  ; exclude the Alt-Tab and preview windows
             "!ahk_class Shell_TrayWnd",  ; exclude the taskbar
@@ -416,6 +416,7 @@ class CslWindowManager {
             "!ahk_class IME",  ; exclude the IME
             "!ahk_class Windows.UI.Core.CoreWindow",  ; exclude the start menu, search, etc.
             "!ahk_exe DesktopMate.exe",  ; exclude the desktop mate
+            "!ahk_exe MateEngineX.exe",  ; exclude the mate engine
         ])
         this._navigators := Map()
         this.spatialNavigator := ClsSpatialWindowNavigator(this)
@@ -435,8 +436,19 @@ class CslWindowManager {
         this._topmostWindowsInvocations.Clear()
         this._maximizedWindowsInvocations.Clear()
         this._navigators.Clear()
+        this._interactableFilter := 0
     }
 
+    /**
+     * @description Set the filter for interactable windows.
+     * 
+     * Don't forget to add "*"
+     * 
+     * @param {(TitleFilter)} filter
+     */
+    SetInteractableWindowsFilter(filter) {
+        this._interactableFilter := filter
+    }
 
     /**
      * @description Get the window ID of a window or 0 if the window is non-interactive or doesn't exist
@@ -492,7 +504,7 @@ class CslWindowManager {
         if (style & WS_EX_TOOLWINDOW)
             return false
 
-        if (!this._nonInteractiveFilter.TestWindow(hwnd))
+        if (!this._interactableFilter.TestWindow(hwnd))
             return false
 
         return true
