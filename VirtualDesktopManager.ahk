@@ -6,9 +6,6 @@
 
 
 class VirtualDesktopError extends Error {
-    __New(message) {
-        super(message)
-    }
 }
 
 
@@ -178,6 +175,8 @@ class ClsVirtualDesktopManager {
     }
 
     IsPinnedWindow(windowHwnd) {
+        if (!windowHwnd)
+            return false
         res := DllCall(this._hProcIsPinnedWindow, "Ptr", windowHwnd, "Int")
         if (res == -1) {
             throw VirtualDesktopError("Failed to check if window is pinned")
@@ -186,6 +185,8 @@ class ClsVirtualDesktopManager {
     }
 
     PinWindow(windowHwnd) {
+        if (!windowHwnd)
+            return
         res := DllCall(this._hProcPinWindow, "Ptr", windowHwnd, "Int")
         if (res == -1) {
             throw VirtualDesktopError("Failed to pin window")
@@ -193,6 +194,8 @@ class ClsVirtualDesktopManager {
     }
 
     UnpinWindow(windowHwnd) {
+        if (!windowHwnd)
+            return
         res := DllCall(this._hProcUnpinWindow, "Ptr", windowHwnd, "Int")
         if (res == -1) {
             throw VirtualDesktopError("Failed to unpin window")
@@ -200,6 +203,8 @@ class ClsVirtualDesktopManager {
     }
 
     IsPinnedApp(appWindowHwnd) {
+        if (!appWindowHwnd)
+            return false
         res := DllCall(this._hProcIsPinnedApp, "Ptr", appWindowHwnd, "Int")
         if (res == -1) {
             throw VirtualDesktopError("Failed to check if app is pinned")
@@ -208,6 +213,8 @@ class ClsVirtualDesktopManager {
     }
 
     PinApp(appWindowHwnd) {
+        if (!appWindowHwnd)
+            return
         res := DllCall(this._hProcPinApp, "Ptr", appWindowHwnd, "Int")
         if (res == -1) {
             throw VirtualDesktopError("Failed to pin app")
@@ -215,6 +222,8 @@ class ClsVirtualDesktopManager {
     }
 
     UnpinApp(appWindowHwnd) {
+        if (!appWindowHwnd)
+            return
         res := DllCall(this._hProcUnpinApp, "Ptr", appWindowHwnd, "Int")
         if (res == -1) {
             throw VirtualDesktopError("Failed to unpin app")

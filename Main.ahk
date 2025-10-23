@@ -19,16 +19,10 @@ UseFlashFocusWindows(TitleFilter([
     "ahk_exe consent.exe",
     "ahk_exe Flow.Launcher.exe",
     "ahk_exe explorer.exe",
-    "!ahk_class XamlExplorerHostIslandWindow",  ; exclude the Alt-Tab and preview windows
-    "!ahk_class Shell_TrayWnd",  ; exclude the taskbar
 ]))
 
 ; Sometimes the mouse doesn't follow window focus when alt-tabbing, for example, when the desktop is focused
-UseFixMouseOnKBWindowFocus(TitleFilter([
-    "*",
-    "!ahk_class XamlExplorerHostIslandWindow",  ; exclude the Alt-Tab and preview windows
-    "!ahk_class Shell_TrayWnd",  ; exclude the taskbar
-]))
+UseFixMouseOnKBWindowFocus()
 
 ; Consider mouse position restoration as mouse move, when switching desktops
 UseDesktopChangeAsMouseMove()

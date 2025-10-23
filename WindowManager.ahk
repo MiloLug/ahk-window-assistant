@@ -415,6 +415,7 @@ class CslWindowManager {
             "!ahk_class Progman",  ; exclude the desktop
             "!ahk_class IME",  ; exclude the IME
             "!ahk_class Windows.UI.Core.CoreWindow",  ; exclude the start menu, search, etc.
+            "!ahk_exe DesktopMate.exe",  ; exclude the desktop mate
         ])
         this._navigators := Map()
         this.spatialNavigator := ClsSpatialWindowNavigator(this)
@@ -579,7 +580,7 @@ class CslWindowManager {
      *         shouldStop(title) => Boolean
      */
     StartMouseWindowFreeDrag(windowHwnd, shouldStop) {
-        if ((minMax := WinGetMinMax(windowHwnd)) == WIN_MINIMIZED)
+        if (!windowHwnd or (minMax := WinGetMinMax(windowHwnd)) == WIN_MINIMIZED)
             return
 
         MouseGetPos(&mouseX1, &mouseY1)
@@ -632,7 +633,7 @@ class CslWindowManager {
      *         shouldStop(title) => Boolean
      */
     StartMouseWindowFreeResize(windowHwnd, shouldStop) {
-        if WinGetMinMax(windowHwnd) != WIN_RESTORED
+        if (!windowHwnd or WinGetMinMax(windowHwnd) != WIN_RESTORED)
             return
         MouseGetPos(&mouseX1, &mouseY1)
         WinGetPos(&windowX1, &windowY1, &windowW1, &windowH1, windowHwnd)
@@ -701,6 +702,9 @@ class CslWindowManager {
      * @returns {(Boolean)}
      */
     IsDraggingWindow(windowHwnd) {
+        if (!windowHwnd)
+            return false
+
         windowHeaderSize := 25
 
         if (this._freeDraggingWindowHwnd == windowHwnd or this._freeResizingWindowHwnd == windowHwnd)
@@ -727,6 +731,8 @@ class CslWindowManager {
     }
 
     IsAlwaysOnTop(windowHwnd) {
+        if (!windowHwnd)
+            return false
         return WinGetExStyle(windowHwnd) & WS_EX_TOPMOST
     }
 
@@ -735,6 +741,8 @@ class CslWindowManager {
      * @param {(Integer)} windowHwnd
      */
     InvokeAlwaysOnTop(windowHwnd) {
+        if (!windowHwnd)
+            return
         ; Yes, this could be done way simpler, like just checking IsAlwaysOnTop
         ; But this way, we can distinguish between the user setting the window to top
         ; and the window being set to top temporarily, for example, when dragging a window
@@ -754,6 +762,8 @@ class CslWindowManager {
      * @param {(Integer)} windowHwnd
      */
     LeaveAlwaysOnTop(windowHwnd) {
+        if (!windowHwnd)
+            return
         state := this._topmostWindowsInvocations.Get(windowHwnd, 0)
         if (state == 0) {
             return
@@ -779,6 +789,8 @@ class CslWindowManager {
      *   - `false` = don't break the invocation chain
      */
     SetAlwaysOnTop(windowHwnd, state, force := true) {
+        if (!windowHwnd)
+            return
         invocation := this._topmostWindowsInvocations.Get(windowHwnd, 0)
         if (invocation != 0 and force) {
             invocation.external := true

@@ -8,19 +8,21 @@
  * closing with keyboard, etc.
  * @param {(TitleFilter)} focusTitles - titles of windows to focus
  */
-UseFixMouseOnKBWindowFocus(focusTitles) {
+UseFixMouseOnKBWindowFocus(focusTitles:=0) {
     eventManager.On(EV_WINDOW_FOCUSED_WITH_KB, MouseFollowFocus)
     MouseFollowFocus(newHwnd) {
-        try {
-            hwnd := WinGetID(newHwnd)
-        } catch {
+        if (
+            !windowManager.IsInteractiveWindow(newHwnd)
+            or (focusTitles and not focusTitles.TestWindow(newHwnd))
+        )
             return
-        }
 
-        if (focusTitles.TestWindow(hwnd)) {
-            OutputDebug("Focusing window on KB: " hwnd)
-            WinActivate(hwnd)
-            MoveMouseToWindow(hwnd)
+        try {
+            WinActivate(newHwnd)
+            MoveMouseToWindow(newHwnd)
+            OutputDebug("Focused window on KB: " newHwnd)
+        } catch {
+            OutputDebug("Failed to focus window on KB: " newHwnd)
         }
     }
 }
@@ -30,20 +32,23 @@ UseFixMouseOnKBWindowFocus(focusTitles) {
  * @param {(TitleFilter)} focusTitles - titles of windows to focus
  * @param {(Boolean)} dontStealMouse - if true, don't focus when mouse is moving/was just moved
  */
-UseFlashFocusWindows(focusTitles, dontStealMouse:=true) {
+UseFlashFocusWindows(focusTitles:=0, dontStealMouse:=true) {
     eventManager.On(EV_WINDOW_FLASH, FocusNewWindow)
     eventManager.On(EV_NEW_WINDOW, FocusNewWindow)
     FocusNewWindow(hwnd, mouseJustMoved) {
-        if (mouseJustMoved and dontStealMouse)
+        if (
+            (mouseJustMoved and dontStealMouse)
+            or !windowManager.IsInteractiveWindow(hwnd)
+            or (focusTitles and not focusTitles.TestWindow(hwnd))
+        )
             return
 
-        OutputDebug("Focusing new window " hwnd)
         try {
-            if (focusTitles.TestWindow(hwnd)) {
-                WinActivate(hwnd)
-                MoveMouseToWindow(hwnd)
-                OutputDebug("Focused new window " hwnd)
-            }
+            WinActivate(hwnd)
+            MoveMouseToWindow(hwnd)
+            OutputDebug("Focused new window: " hwnd)
+        } catch {
+            OutputDebug("Failed to focus new window: " hwnd)
         }
     }
 }

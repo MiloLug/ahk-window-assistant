@@ -86,11 +86,12 @@ class TitleFilter {
                     throw ValueError("Invalid prefix: '" parsed[1] "'. Allowed prefixes: " IterJoin(IterKeys(TitleFilter._allPrefixes), ", "))
                 }
 
-                ; if the prefix is ahk_id or !ahk_id, just use hwnd
+                ; Special case: if the prefix is ahk_id or !ahk_id, just use hwnd
                 if (parsed[1] == "ahk_id" or parsed[1] == "!ahk_id") {
                     parsed[2] := Number(parsed[2])
                 }
 
+                ; Using this flag we can avoid checking the exclusions when testing a window
                 if (SubStr(parsed[1], 1, 1) == "!")
                     this._hasExclusions := true
 
@@ -106,6 +107,8 @@ class TitleFilter {
      * @param {(Integer)} hwnd - the window handle
      */
     TestWindow(hwnd) {
+        winExe := ''
+        winClass := ''
         try {
             if this._hasExclusions and (
                 this._titlesMap["!ahk_exe"].Has(winExe := WinGetProcessName(hwnd))
