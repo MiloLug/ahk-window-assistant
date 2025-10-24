@@ -104,3 +104,11 @@ SafeWinClose(ahkWindowTitle) {
     if (id != 0)
         WinClose(id)
 }
+
+SwitchCapsLock() {
+    if (GetKeyState("CapsLock", "T")) {
+        SetCapsLockState('Off')
+    } else {
+        SetCapsLockState('On')
+    }
+}

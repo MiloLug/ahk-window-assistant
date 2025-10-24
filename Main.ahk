@@ -70,5 +70,9 @@ UseDesktopChangeAsMouseMove()
 !j::GoToBottomWindow()
 !i::GoToNextOverlappingWindow()
 
+!#::windowManager.GetAppNavigator().Next()
 
-!+Tab::windowManager.GetAppNavigator().Next()
+; CapsLock as a language switch
+SetCapsLockState('AlwaysOff')
+CapsLock::Send("{Shift down}{Alt down}{Shift up}{Alt up}")
++CapsLock::SwitchCapsLock()
