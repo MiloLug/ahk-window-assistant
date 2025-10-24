@@ -70,7 +70,8 @@ UseDesktopChangeAsMouseMove()
 !j::GoToBottomWindow()
 !i::GoToNextOverlappingWindow()
 
-!#::windowManager.GetAppNavigator().Next()
+; Navigate through all windows of the current app
++Tab::windowManager.GetAppNavigator().Next()
 
 ; CapsLock as a language switch
 SetCapsLockState('AlwaysOff')

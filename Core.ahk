@@ -20,9 +20,8 @@ SetInteractableWindowsFilter(filter) {
 
 MoveWindowToDesktop(ahkWindowTitle, number) {
     hwnd := windowManager.GetID(ahkWindowTitle)
-    if (hwnd == 0) {
+    if (!hwnd)
         return
-    }
     if (number == -1) {
         number := desktopManager.GetPreviousDesktopNum()
     }

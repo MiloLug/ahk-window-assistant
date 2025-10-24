@@ -239,6 +239,10 @@ class ClsVirtualDesktopManager {
         return res
     }
 
+    /**
+     * @description Fill the mouse possitions array up to `maxNum` (1-indexed)
+     * @param {(Integer)} maxNum
+     */
     _FillMousePositions(maxNum) {
         if (maxNum > this._mousePositions.Length) {
             loop (maxNum - this._mousePositions.Length) {
@@ -247,6 +251,10 @@ class ClsVirtualDesktopManager {
         }
     }
 
+    /**
+     * @description Save the mouse position for the given desktop number (0-indexed)
+     * @param {(Integer)} num
+     */
     SaveMousePosition(num) {
         num++
         this._FillMousePositions(num)
@@ -254,6 +262,10 @@ class ClsVirtualDesktopManager {
         this._mousePositions[num] := [x, y]
     }
 
+    /**
+     * @description Restore the mouse position for the given desktop number (0-indexed)
+     * @param {(Integer)} num
+     */
     RestoreMousePosition(num) {
         num++
         if (num <= this._mousePositions.Length and this._mousePositions[num] != 0) {
@@ -262,10 +274,16 @@ class ClsVirtualDesktopManager {
         }
     }
 
+    /**
+     * @param {(Integer)} num 0-indexed
+     * @param {(Boolean)} rememberMousePosition
+     * - `true` Remember the mouse position on the current desktop
+     * @param {(Boolean)} restoreMousePosition
+     * - `true` Restore mouse position on the target desktop
+     */
     GoToDesktop(num, rememberMousePosition:=true, restoreMousePosition:=true) {
-        if (num == this._currentDesktop or num < 0) {
+        if (num == this._currentDesktop or num < 0)
             return
-        }
 
         if (rememberMousePosition)
             this.SaveMousePosition(this._currentDesktop)
@@ -279,37 +297,64 @@ class ClsVirtualDesktopManager {
             this.RestoreMousePosition(num)
     }
 
+    /**
+     * @returns {(Integer)} 0-indexed
+     */
     GetPreviousDesktopNum() {
         return this._lastDesktop
     }
 
-    RemoveDesktop(removeNum, goToNum, restoreMousePosition:=true) {
+    /**
+     * @description Remove the desktop at `removeNum` and go to `goToNum`
+     * @param {(Integer)} removeNum 0-indexed
+     * @param {(Integer)} goToNum 0-indexed
+     * - `-1` Go to the current desktop
+     * @param {(Boolean)} restoreMousePosition
+     */
+    RemoveDesktop(removeNum, goToNum:=-1, restoreMousePosition:=true) {
+        if (goToNum == -1) {
+            goToNum := this._currentDesktop
+        }
         if (removeNum == goToNum) {
             throw VirtualDesktopError("Removed desktop and go-to desktop cannot be the same")
         }
         if (removeNum < this._mousePositions.Length) {
-            this._mousePositions.RemoveAt(removeNum+1)
+            this._mousePositions.RemoveAt(removeNum + 1)
+        }
+        if (goToNum > removeNum) {
+            goToNum--  ; Removed a desktop before this one, offset needed
+        }
+        if (this._lastDesktop > removeNum) {
+            this._lastDesktop--
+        } else if (this._lastDesktop == removeNum) {
+            this._lastDesktop := goToNum
         }
         res := DllCall(this._hProcRemoveDesktop, "Int", removeNum, "Int", goToNum, "Int")
         if (res == -1) {
             throw VirtualDesktopError("Failed to remove desktop")
         }
 
-        if (restoreMousePosition) {
-            if (goToNum > removeNum) {
-                goToNum--  ; We removed a desktop before this one, so offset needed
-            }
+        if (restoreMousePosition)
             this.RestoreMousePosition(goToNum)
-        }
     }
 
+    /**
+     * @description Create desktops up to and INCLUDING `lastNum`
+     * @param {(Integer)} lastNum 0-indexed
+     */
     FillDesktops(lastNum) {
-        ; Create multiple desktops up to lastNum
         while (this.GetCount() <= lastNum) {
             this.CreateDesktop()
         }
     }
 
+    /**
+     * @description Event handler for the virtual desktop manager message
+     * @param {(Integer)} prevDesktop 0-indexed
+     * @param {(Integer)} newDesktop 0-indexed
+     * @param {(Integer)} msg
+     * @param {(Integer)} hwnd
+     */
     _OnVirtualDesktopManagerMessage(prevDesktop, newDesktop, msg, hwnd) {
         Critical(1)
         OutputDebug("VDM: prev>" prevDesktop " new>" newDesktop " msg>" msg " hwnd>" hwnd)
