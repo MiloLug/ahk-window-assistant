@@ -496,7 +496,14 @@ class CslWindowManager {
     }
 
     IsInteractiveWindow(hwnd) {
-        style := WinGetStyle(hwnd)
+        if (!hwnd)
+            return false
+
+        try {
+            style := WinGetStyle(hwnd)
+        } catch {
+            return false
+        }
         if (!(style & WS_VISIBLE) || (style & WS_DISABLED))
             return false
 
