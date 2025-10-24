@@ -7,7 +7,7 @@ class ClsEventBus {
         ; { eventId: { (originalHandler): { once: bool } } }
         this._events := Map()
 
-        ; { eventId: [firstRegistrationCallback,...] }
+        ; { eventId: { (firstRegistrationCallback): 1 } }
         this._lazyRegistrators := Map()
 
         this.AddLazyRegistrator(EV_MOUSE_MOVED, this._SetupMouseMovedEvent.Bind(this))
@@ -42,9 +42,15 @@ class ClsEventBus {
 
     AddLazyRegistrator(eventId, handler) {
         if (!this._lazyRegistrators.Has(eventId)) {
-            this._lazyRegistrators[eventId] := []
+            this._lazyRegistrators[eventId] := Map()
         }
-        this._lazyRegistrators[eventId].Push(handler)
+        this._lazyRegistrators[eventId][handler] := 1
+    }
+
+    RemoveLazyRegistrator(eventId, handler) {
+        if (this._lazyRegistrators.Has(eventId)) {
+            this._lazyRegistrators[eventId].Delete(handler)
+        }
     }
 
     Trigger(eventId, args*) {

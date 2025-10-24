@@ -56,6 +56,7 @@ class ClsSequenceWindowNavigator {
         ObjAddRef(ObjPtr(this))
         SetTimer(this._EndNavigation_Bind, 0)
         this._EndNavigation_Bind := 0
+        this._windowManager := 0
     }
 
     /**
@@ -178,6 +179,13 @@ class ClsSpatialWindowNavigator {
         this._currentSelector := currentSelector
         this._currentHwnd := 0
         this._intersectionThreshold := intersectionThreshold
+
+        ObjRelease(ObjPtr(this))
+    }
+
+    __Delete() {
+        ObjAddRef(ObjPtr(this))
+        this._windowManager := 0
     }
 
     _CalcLogicalDistance(x1, y1, x2, y2, xCost:=1, yCost:=1) {
@@ -420,6 +428,8 @@ class CslWindowManager {
         ])
         this._navigators := Map()
         this.spatialNavigator := ClsSpatialWindowNavigator(this)
+        this._SetupWindowSwitchWatch_Bind := this._SetupWindowSwitchWatch.Bind(this)
+        this._OnShellHookMessage_Bind := this._OnShellHookMessage.Bind(this)
 
         SetTimer(this._cleanDanglingObjects_Bind, 5000)
         ObjRelease(ObjPtr(this))
@@ -428,6 +438,7 @@ class CslWindowManager {
     __Delete() {
         ObjAddRef(ObjPtr(this))
         SetTimer(this._cleanDanglingObjects_Bind, 0)
+        this.UnregisterEventManager()
         this._cleanDanglingObjects_Bind := 0
         this._OnVirtualDesktopChanged_Bind := 0
         this._UpdateMouseMoveTime_Bind := 0
@@ -586,9 +597,17 @@ class CslWindowManager {
         DllCall("RegisterShellHookWindow", "UInt", A_ScriptHwnd)
         this._messenger := DllCall("RegisterWindowMessage", "Str","SHELLHOOK")
 
-        OnMessage(this._messenger, this._OnShellHookMessage.Bind(this))
+        OnMessage(this._messenger, this._OnShellHookMessage_Bind)
 
-        this._eventManager.AddLazyRegistrator(EV_WINDOW_FOCUSED_WITH_KB, () => this._SetupWindowSwitchWatch())
+        this._eventManager.AddLazyRegistrator(EV_WINDOW_FOCUSED_WITH_KB, this._SetupWindowSwitchWatch_Bind)
+    }
+
+    UnregisterEventManager() {
+        if (this._eventManager == 0)
+            return
+        this._eventManager.RemoveLazyRegistrator(EV_WINDOW_FOCUSED_WITH_KB, this._SetupWindowSwitchWatch_Bind)
+        this._eventManager := 0
+        OnMessage(this._messenger, this._OnShellHookMessage_Bind, 0)
     }
 
     /**
