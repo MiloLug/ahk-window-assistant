@@ -22,7 +22,7 @@ class ClsEventBus {
     }
 
     _SetupMouseMovedEvent() {
-        this.__rawInputWatcher := MouseRawInputHook(this.Trigger.Bind(this, EV_MOUSE_MOVED), 1)
+        this.__rawInputWatcher := ClsMouseRawInputHook(this.Trigger.Bind(this, EV_MOUSE_MOVED), 1)
     }
 
     On(eventId, handler, once := false) {
@@ -81,7 +81,7 @@ class ClsEventBus {
  * @param {(Integer)} UsagePage - HID Usage Page (1 = Generic Desktop Controls)
  * @param {(Integer)} UsageId - HID Usage ID (2 = Mouse, 6 = Keyboard within page 1)
  */
-class MouseRawInputHook {
+class ClsMouseRawInputHook {
     __New(Callback, EventType:=3, UsagePage:=1, UsageId:=2) {
         static DevSize := 8 + A_PtrSize, RIDEV_INPUTSINK := 0x00000100
         this.RAWINPUTDEVICE := Buffer(DevSize, 0), this.EventType := EventType

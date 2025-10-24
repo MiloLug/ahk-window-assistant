@@ -437,6 +437,7 @@ class CslWindowManager {
         this._maximizedWindowsInvocations.Clear()
         this._navigators.Clear()
         this._interactableFilter := 0
+        this._spatialNavigator := 0
     }
 
     /**
