@@ -179,13 +179,6 @@ class ClsSpatialWindowNavigator {
         this._currentSelector := currentSelector
         this._currentHwnd := 0
         this._intersectionThreshold := intersectionThreshold
-
-        ObjRelease(ObjPtr(this))
-    }
-
-    __Delete() {
-        ObjAddRef(ObjPtr(this))
-        this._windowManager := 0
     }
 
     _CalcLogicalDistance(x1, y1, x2, y2, xCost:=1, yCost:=1) {

@@ -59,12 +59,12 @@ PinAndSetOnTop(ahkWindowTitle) {
 MoveMouseToWindow(windowHwnd) {
     try {
         WinGetPos(&winX, &winY, &winWidth, &winHeight, windowHwnd)
-        mouseX := winX + winWidth * 0.5
-        mouseY := winY + winHeight * 0.5
-        DllCall("SetCursorPos", "Int", mouseX, "Int", mouseY)
     } catch {
         OutputDebug("Failed to get position of window " windowHwnd)
     }
+    mouseX := winX + winWidth * 0.5
+    mouseY := winY + winHeight * 0.5
+    DllCall("SetCursorPos", "Int", mouseX, "Int", mouseY)
 }
 
 GoToLeftWindow() {
