@@ -5,8 +5,9 @@ InstallKeybdHook()
 SetWinDelay(10)  ; This won't affect such things as moving windows, they invoke delay 0 internally
 CoordMode("Mouse", "Screen")
 SetWorkingDir(A_ScriptDir)
-
 A_MenuMaskKey := "vkE8"
+
+#Include Config.ahk
 
 #Include Core.ahk
 #Include WindowsQuirks.ahk

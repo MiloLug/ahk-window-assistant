@@ -2,6 +2,7 @@
 ;   VirtualDesktopAccessor.dll (https://github.com/Ciantic/VirtualDesktopAccessor)
 
 #include Constants.ahk
+#include Config.ahk
 #include Utils.ahk
 
 
@@ -11,10 +12,38 @@ class VirtualDesktopError extends Error {
 
 class ClsVirtualDesktopManager {
     __New() {
+        dllPath := A_ScriptDir . "\VirtualDesktopAccessor.dll"
+        
+        ; Check if DLL exists before attempting to load
+        if (!FileExist(dllPath)) {
+            MsgBox(
+                "ERROR: VirtualDesktopAccessor.dll not found!`n`n"
+                . "Expected location: " dllPath "`n`n"
+                . "Please download it from:`n"
+                . "https://github.com/Ciantic/VirtualDesktopAccessor`n`n"
+                . "Script will now exit.",
+                "Missing DLL", "Icon!"
+            )
+            ExitApp(1)
+        }
+        
         try {
-            this._hVD := DllCall("LoadLibrary", "Str", A_ScriptDir . "\VirtualDesktopAccessor.dll", "Ptr")
-        } catch {
-            throw ValueError("Failed to load VirtualDesktopAccessor.dll")
+            this._hVD := DllCall("LoadLibrary", "Str", dllPath, "Ptr")
+            if (!this._hVD) {
+                throw Error("LoadLibrary returned null")
+            }
+        } catch as err {
+            MsgBox(
+                "ERROR: Failed to load VirtualDesktopAccessor.dll`n`n"
+                . "Error: " err.Message "`n`n"
+                . "This might be due to:`n"
+                . "- Missing Visual C++ Redistributable`n"
+                . "- Incompatible DLL version`n"
+                . "- Windows version mismatch`n`n"
+                . "Script will now exit.",
+                "DLL Load Error", "Icon!"
+            )
+            ExitApp(1)
         }
 
         this._hProcGetDesktopCount := DllCall("GetProcAddress", "Ptr", this._hVD, "AStr", "GetDesktopCount", "Ptr")
@@ -103,7 +132,7 @@ class ClsVirtualDesktopManager {
     MoveWindowToDesktop(windowHwnd, num) {
         res := DllCall(this._hProcMoveWindowToDesktopNumber, "Ptr", windowHwnd, "Int", num, "Int")
         if (res == -1) {
-            throw VirtualDesktopError("Failed to move window to desktop")
+            throw VirtualDesktopError("Failed to move window " windowHwnd " to desktop " num)
         }
     }
     
@@ -290,7 +319,7 @@ class ClsVirtualDesktopManager {
         
         res := DllCall(this._hProcGoToDesktopNumber, "Int", num, "Int")
         if (res == -1) {
-            throw VirtualDesktopError("Failed to go to desktop")
+            throw VirtualDesktopError("Failed to go to desktop " num)
         }
 
         if (restoreMousePosition)
@@ -316,7 +345,7 @@ class ClsVirtualDesktopManager {
             goToNum := this._currentDesktop
         }
         if (removeNum == goToNum) {
-            throw VirtualDesktopError("Removed desktop and go-to desktop cannot be the same")
+            throw VirtualDesktopError("Removed desktop and go-to desktop cannot be the same: " removeNum)
         }
         if (removeNum < this._mousePositions.Length) {
             this._mousePositions.RemoveAt(removeNum + 1)

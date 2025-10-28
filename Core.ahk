@@ -7,7 +7,7 @@
 
 eventManager := ClsEventBus()
 desktopManager := ClsVirtualDesktopManager()
-windowManager := CslWindowManager()
+windowManager := ClsWindowManager()
 
 windowManager.RegisterEventManager(eventManager)
 desktopManager.RegisterEventManager(eventManager)
@@ -61,10 +61,12 @@ MoveMouseToWindow(windowHwnd) {
         WinGetPos(&winX, &winY, &winWidth, &winHeight, windowHwnd)
     } catch {
         OutputDebug("Failed to get position of window " windowHwnd)
+        return false
     }
     mouseX := winX + winWidth * 0.5
     mouseY := winY + winHeight * 0.5
     DllCall("SetCursorPos", "Int", mouseX, "Int", mouseY)
+    return true
 }
 
 GoToLeftWindow() {

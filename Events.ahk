@@ -100,7 +100,9 @@ class ClsMouseRawInputHook {
     __Delete() {
         static RIDEV_REMOVE := 0x00000001, DevSize := 8 + A_PtrSize
         NumPut("Uint", RIDEV_REMOVE, this.RAWINPUTDEVICE, 4)
-        DllCall("RegisterRawInputDevices", "Ptr", this.RAWINPUTDEVICE, "UInt", 1, "UInt", DevSize)
+        try {
+            DllCall("RegisterRawInputDevices", "Ptr", this.RAWINPUTDEVICE, "UInt", 1, "UInt", DevSize)
+        }
         ObjAddRef(ObjPtr(this))
         OnMessage(WM_INPUT, this.__Callback, 0)
         this.__Callback := 0

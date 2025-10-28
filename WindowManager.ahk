@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 
 #include Constants.ahk
+#include Config.ahk
 #include Geometry.ahk
 
 
@@ -148,7 +149,7 @@ class ClsSequenceWindowNavigator {
         if (instant) {
             WinActivate(this._GetSelected())
         }
-        SetTimer(this._EndNavigation_Bind, 500)
+        SetTimer(this._EndNavigation_Bind, Config.NAVIGATION_DELAY)
     }
 
     /**
@@ -173,7 +174,7 @@ class ClsSequenceWindowNavigator {
  *         Sqrt(intersectionArea) / Sqrt(window1Area + window2Area) > intersectionThreshold
  */
 class ClsSpatialWindowNavigator {
-    __New(windowManager, listSelector:='', currentSelector:='A', intersectionThreshold:=0.1) {
+    __New(windowManager, listSelector:='', currentSelector:='A', intersectionThreshold:=Config.NAVIGATION_INTERSECTION_THRESHOLD) {
         this._windowManager := windowManager
         this._listSelector := listSelector
         this._currentSelector := currentSelector
@@ -385,7 +386,7 @@ class ClsSpatialWindowNavigator {
     }
 }
 
-class CslWindowManager {
+class ClsWindowManager {
     __New() {
         this._eventManager := 0
         this._messenger := 0
@@ -541,7 +542,7 @@ class CslWindowManager {
         Critical(1)
         this._eventManager.Trigger(EV_SHELLHOOK, message, id)
 
-        mouseJustMoved := A_TickCount - this._lastMouseMoveTime < 500
+        mouseJustMoved := A_TickCount - this._lastMouseMoveTime < Config.MOUSE_MOVE_TIMEOUT
 
         switch message {
             case HSHELL_FLASH:
@@ -598,7 +599,10 @@ class CslWindowManager {
     UnregisterEventManager() {
         if (this._eventManager == 0)
             return
-        this._eventManager.RemoveLazyRegistrator(EV_WINDOW_FOCUSED_WITH_KB, this._SetupWindowSwitchWatch_Bind)
+        ; not that important if event manager is already broken or deleted
+        try {
+            this._eventManager.RemoveLazyRegistrator(EV_WINDOW_FOCUSED_WITH_KB, this._SetupWindowSwitchWatch_Bind)
+        }
         this._eventManager := 0
         OnMessage(this._messenger, this._OnShellHookMessage_Bind, 0)
     }
@@ -699,7 +703,7 @@ class CslWindowManager {
 
         this.InvokeAlwaysOnTop(windowHwnd)
         loop {
-            if shouldStop(windowHwnd)
+            if (shouldStop(windowHwnd))
                 break
 
             MouseGetPos(&mouseX2, &mouseY2)
@@ -737,7 +741,7 @@ class CslWindowManager {
         if (!windowHwnd)
             return false
 
-        windowHeaderSize := 25
+        windowHeaderSize := Config.WINDOW_HEADER_SIZE
 
         if (this._freeDraggingWindowHwnd == windowHwnd or this._freeResizingWindowHwnd == windowHwnd)
             return true

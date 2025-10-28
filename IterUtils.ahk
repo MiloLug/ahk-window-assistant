@@ -39,7 +39,7 @@ IterMap(iterable, func) {
     it := Iter(iterable)
     return (&item) => (
         res := it(&item),
-        res and (item := func(res)),
+        res and (item := func(item)),  ; Apply func to item, not res
         res
     )
 }
