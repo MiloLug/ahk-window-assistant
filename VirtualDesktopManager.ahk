@@ -269,7 +269,7 @@ class ClsVirtualDesktopManager {
     }
 
     /**
-     * @description Fill the mouse possitions array up to `maxNum` (1-indexed)
+     * @description Fill the mouse positions array up to `maxNum` (1-indexed)
      * @param {(Integer)} maxNum
      */
     _FillMousePositions(maxNum) {

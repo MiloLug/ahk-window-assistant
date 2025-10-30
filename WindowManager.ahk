@@ -127,6 +127,8 @@ class ClsSequenceWindowNavigator {
     }
 
     _GetSelected() {
+        if (this._windows.Length == 0)
+            return 0
         return this._windows[Mod(this._currentN - 1, this._windows.Length) + 1]
     }
 
@@ -147,7 +149,9 @@ class ClsSequenceWindowNavigator {
         this._currentN++
         this._activateOnFinish := !instant
         if (instant) {
-            WinActivate(this._GetSelected())
+            selectedHwnd := this._GetSelected()
+            if (selectedHwnd != 0)
+                WinActivate(selectedHwnd)
         }
         SetTimer(this._EndNavigation_Bind, Config.NAVIGATION_DELAY)
     }
@@ -157,7 +161,9 @@ class ClsSequenceWindowNavigator {
      */
     _EndNavigation() {
         if (this._activateOnFinish) {
-            WinActivate(this._GetSelected())
+            selectedHwnd := this._GetSelected()
+            if (selectedHwnd != 0)
+                WinActivate(selectedHwnd)
         }
         this._currentN := 1
     }
@@ -619,24 +625,25 @@ class ClsWindowManager {
         if (!windowHwnd or (minMax := WinGetMinMax(windowHwnd)) == WIN_MINIMIZED)
             return
 
-        MouseGetPos(&mouseX1, &mouseY1)
-        WinGetPos(&windowX1, &windowY1, &windowW1, &windowH1, windowHwnd)
+        MouseGetPos(&mouseXStart, &mouseYStart)
+        WinGetPos(&windowX, &windowY, &windowW, &windowH, windowHwnd)
         this._freeDraggingWindowHwnd := windowHwnd
 
         ; If the window is maximized, then it's convenient ot restore it for moving
         ; for example, to move it to another screen
-        if (minMax != WIN_RESTORED) {
+        if (minMax == WIN_MAXIMIZED) {
             this.InvokeWinRestored(windowHwnd)
-            WinGetPos(&windowX1R, &windowY1R, &windowW1R, &windowH1R, windowHwnd)
+            WinGetPos(,, &windowWR, &windowHR, windowHwnd)
 
-            ; Mouse position in the resized window
-            mouseX1Win := (mouseX1 - windowX1) / windowW1 * windowW1R
-            mouseY1Win := (mouseY1 - windowY1) / windowH1 * windowH1R
+            ; Calculate what mouse position SHOULD BE relative to the restored window
+            mouseXWinR := (mouseXStart - windowX) / windowW * windowWR
+            mouseYWinR := (mouseYStart - windowY) / windowH * windowHR
 
-            windowX1 := mouseX1 - mouseX1Win
-            windowY1 := mouseY1 - mouseY1Win
+            ; Offset the window so the mouse is in the right spot
+            windowX := mouseXStart - mouseXWinR
+            windowY := mouseYStart - mouseYWinR
 
-            WinMove(windowX1, windowY1,,, windowHwnd)
+            WinMove(windowX, windowY,,, windowHwnd)
         }
 
         this.InvokeAlwaysOnTop(windowHwnd)
@@ -645,17 +652,17 @@ class ClsWindowManager {
             if (shouldStop(windowHwnd))
                 break
 
-            MouseGetPos(&mouseX2, &mouseY2)
-            mouseX2 -= mouseX1
-            mouseY2 -= mouseY1
-            if (mouseX2 == 0 and mouseY2 == 0)
+            MouseGetPos(&mouseXOffset, &mouseYOffset)
+            mouseXOffset -= mouseXStart
+            mouseYOffset -= mouseYStart
+            if (mouseXOffset == 0 and mouseYOffset == 0)
                 continue
 
-            WinMove(windowX1 + mouseX2, windowY1 + mouseY2,,, windowHwnd)
+            WinMove(windowX + mouseXOffset, windowY + mouseYOffset,,, windowHwnd)
         }
         this.LeaveLowWinDelay()
         this.LeaveAlwaysOnTop(windowHwnd)
-        if (minMax != WIN_RESTORED)
+        if (minMax == WIN_MAXIMIZED)
             this.LeaveWinRestored(windowHwnd)
         this._freeDraggingWindowHwnd := 0
     }
@@ -671,63 +678,36 @@ class ClsWindowManager {
     StartMouseWindowFreeResize(windowHwnd, shouldStop) {
         if (!windowHwnd or WinGetMinMax(windowHwnd) != WIN_RESTORED)
             return
-        MouseGetPos(&mouseX1, &mouseY1)
-        WinGetPos(&windowX1, &windowY1, &windowW1, &windowH1, windowHwnd)
+        MouseGetPos(&mouseXStart, &mouseYStart)
+        WinGetPos(&windowX, &windowY, &windowW, &windowH, windowHwnd)
 
-        if (mouseX1 < windowX1 + windowW1 / 2)
-            hResize := 1
-        else
-            hResize := -1
-
-        if (mouseY1 < windowY1 + windowH1 / 2)
-            vResize := 1
-        else
-            vResize := -1
-
-        ; top    4 5
-        ; bottom 7 8
-        if (vResize == 1) {
-            if (hResize == 1)
-                wParam := 4
-            else
-                wParam := 5
-        } else {
-            if (hResize == 1)
-                wParam := 7
-            else
-                wParam := 8
-        }
+        hResizeDir := (mouseXStart < windowX + windowW / 2) ? -1 : 1
+        hMoveDir := (1 - hResizeDir) / 2
+        vResizeDir := (mouseYStart < windowY + windowH / 2) ? -1 : 1
+        vMoveDir := (1 - vResizeDir) / 2
 
         this._freeResizingWindowHwnd := windowHwnd
-        SendMessage(WM_ENTERSIZEMOVE, 0, 0, , windowHwnd)
 
         this.InvokeAlwaysOnTop(windowHwnd)
         loop {
             if (shouldStop(windowHwnd))
                 break
 
-            MouseGetPos(&mouseX2, &mouseY2)
-            mouseX2 -= mouseX1
-            mouseY2 -= mouseY1
+            MouseGetPos(&mouseXOffset, &mouseYOffset)
+            mouseXOffset -= mouseXStart
+            mouseYOffset -= mouseYStart
+            if (mouseXOffset == 0 and mouseYOffset == 0)
+                continue
 
-            windowW2 := windowW1 - hResize * mouseX2
-            windowH2 := windowH1 - vResize * mouseY2
-            windowX2 := windowX1 + (hResize + 1) / 2 * mouseX2
-            windowY2 := windowY1 + (vResize + 1) / 2 * mouseY2
             WinMove(
-                windowX2,
-                windowY2,
-                windowW2,
-                windowH2,
+                windowX + hMoveDir * mouseXOffset,
+                windowY + vMoveDir * mouseYOffset,
+                windowW + hResizeDir * mouseXOffset,
+                windowH + vResizeDir * mouseYOffset,
                 windowHwnd
             )
-            ; TODO: I'm not sure if this works or IF IT'S NEEDED AT ALL. Need to fix the painting issue when resizing somehow
-            WinCalls.SendWmNccalcsize(windowHwnd, windowX2, windowY2, windowX2 + windowW2, windowY2 + windowH2)
-            PostMessage(WM_PAINT,,, , windowHwnd)
         }
         this.LeaveAlwaysOnTop(windowHwnd)
-        SendMessage(WM_EXITSIZEMOVE, 0, 0, , windowHwnd)
-        WinCalls.SendWmSize(windowHwnd, windowW2, windowH2)
         this._freeResizingWindowHwnd := 0
     }
 
