@@ -1,5 +1,6 @@
 #Requires AutoHotkey v2.0
 
+
 class Geometry {
     /**
      * @description
@@ -32,70 +33,49 @@ class Geometry {
      * @param {(Integer)} sDir - vertical or horizontal
      *   - 0 - horizontal
      *   - 1 - vertical
-     * @param {(Integer)} rX1 - Top-Left point X
-     * @param {(Integer)} rY1 - Top-Left point Y
-     * @param {(Integer)} rX2 - Bottom-Right point X
-     * @param {(Integer)} rY2 - Bottom-Right point Y
+     * @param {(Array)} r - Rect
      */
-    static CalcIntersectionDistance(sX1, sY1, sX2, sY2, sDir, rX1, rY1, rX2, rY2) {
+    static CalcIntersectionDistance(sX1, sY1, sX2, sY2, sDir, r) {
         return (
             sDir == 0
-                ? (rY1 < sY1 ? sY1 : rY1) - (rY2 < sY2 ? rY2 : sY2)
-                : (rX1 < sX1 ? sX1 : rX1) - (rX2 < sX2 ? rX2 : sX2)
+                ? (r[2] < sY1 ? sY1 : r[2]) - (r[4] < sY2 ? sY2 : r[4])
+                : (r[1] < sX1 ? sX1 : r[1]) - (r[3] < sX2 ? sX2 : r[3])
         )
     }
 
     /**
      * @description Check if two rectangles (r1 and r2) intersect
-     * 
-     * r1 defined by:
-     *     Top-Left point (r1X1, r1Y1) and Bottom-Right point (r1X2, r1Y2)
-     * 
-     * r2 defined by:
-     *     Top-Left point (r2X1, r2Y1) and Bottom-Right point (r2X2, r2Y2)
-     * 
-     * @param {(Integer)} r1X1
-     * @param {(Integer)} r1Y1
-     * @param {(Integer)} r1X2
-     * @param {(Integer)} r1Y2
-     * @param {(Integer)} r2X1
-     * @param {(Integer)} r2Y1
-     * @param {(Integer)} r2X2
-     * @param {(Integer)} r2Y2
+     * @param {(Array)} r1 - Rect
+     * @param {(Array)} r2 - Rect
      * @returns {(Boolean)} - true if the rectangles intersect, false otherwise
      */
-    static RectanglesIntersect(r1X1, r1Y1, r1X2, r1Y2, r2X1, r2Y1, r2X2, r2Y2) {
+    static DoRectanglesIntersect(r1, r2) {
         return (
-            r1X1 < r2X2 and r1X2 > r2X1 and r1Y1 < r2Y2 and r1Y2 > r2Y1
+            r1[1] < r2[3] and r1[3] > r2[1] and r1[2] < r2[4] and r1[4] > r2[2]
         )
     }
 
     /**
      * @description Return the area of intersection of two rectangles r1 and r2
-     * 
-     * r1 defined by:
-     *     Top-Left point (r1X1, r1Y1) and Bottom-Right point (r1X2, r1Y2)
-     * 
-     * r2 defined by:
-     *     Top-Left point (r2X1, r2Y1) and Bottom-Right point (r2X2, r2Y2)
-     * 
-     * @param {(Integer)} r1X1
-     * @param {(Integer)} r1Y1
-     * @param {(Integer)} r1X2
-     * @param {(Integer)} r1Y2
-     * @param {(Integer)} r2X1
-     * @param {(Integer)} r2Y1
-     * @param {(Integer)} r2X2
-     * @param {(Integer)} r2Y2
+     * @param {(Array)} r1 - Rect
+     * @param {(Array)} r2 - Rect
      * @returns {(Integer)} - the area of intersection, 0 if the rectangles don't intersect
      */
-    static GetIntersectionArea(r1X1, r1Y1, r1X2, r1Y2, r2X1, r2Y1, r2X2, r2Y2) {
-        if (!Geometry.RectanglesIntersect(r1X1, r1Y1, r1X2, r1Y2, r2X1, r2Y1, r2X2, r2Y2))
+    static GetIntersectionArea(r1, r2) {
+        if (!Geometry.DoRectanglesIntersect(r1, r2))
             return 0
 
         return (
-            ((r1X2 < r2X2 ? r1X2 : r2X2) - (r1X1 > r2X1 ? r1X1 : r2X1)) *
-            ((r1Y2 < r2Y2 ? r1Y2 : r2Y2) - (r1Y1 > r2Y1 ? r1Y1 : r2Y1))
+            ((r1[3] < r2[3] ? r1[3] : r2[3]) - (r1[1] > r2[1] ? r1[1] : r2[1])) *
+            ((r1[4] < r2[4] ? r1[4] : r2[4]) - (r1[2] > r2[2] ? r1[2] : r2[2]))
         )
+    }
+
+    static Rect(x1, y1, x2, y2) {
+        return [x1, y1, x2, y2]
+    }
+
+    static GetArea(r) {
+        return (r[3] - r[1]) * (r[4] - r[2])
     }
 }
