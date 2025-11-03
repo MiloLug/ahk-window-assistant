@@ -107,3 +107,37 @@ ArrReversedIter(arr) {
         i > 0 ? (val := arr[i--], true): false
     )
 }
+
+
+ArrSort(arr, comparator := (a, b) => a - b) {
+    static qsort(arr, l, r, comp) {
+        if (l >= r)
+            return
+
+        pivot := arr[r]
+        i := l
+        j := r - 1
+        while (i < j) {
+            while (i < r and comp(arr[i], pivot) <= 0)
+                i++
+            while (j > l and comp(arr[j], pivot) >= 0)
+                j--
+
+            if (i >= j)
+                break
+
+            t := arr[i]
+            arr[i] := arr[j]
+            arr[j] := t
+        }
+        if (comp(arr[i], pivot) > 0) {
+            arr[r] := arr[i]
+            arr[i] := pivot
+        }
+
+        qsort(arr, l, i - 1, comp)
+        qsort(arr, i + 1, r, comp)
+    }
+    qsort(arr, 1, arr.Length, comparator)
+    return arr
+}

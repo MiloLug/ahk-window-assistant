@@ -3,11 +3,13 @@
 #Include VirtualDesktopManager.ahk
 #Include Events.ahk
 #Include WindowManager.ahk
+#Include MonitorManager.ahk
 
 
 eventManager := ClsEventBus()
 desktopManager := ClsVirtualDesktopManager()
 windowManager := ClsWindowManager()
+monitorManager := ClsMonitorManager()
 
 windowManager.RegisterEventManager(eventManager)
 desktopManager.RegisterEventManager(eventManager)
