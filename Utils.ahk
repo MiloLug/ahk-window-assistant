@@ -26,7 +26,7 @@ class TitleFilter {
         this._matchAll := false
         this._hasExclusions := false
 
-        this._CreateWindowTitlesMap(windowTitles)
+        this._BakeWindowTitlesMap(windowTitles)
     }
 
     _SanitizeMap() {
@@ -37,14 +37,12 @@ class TitleFilter {
             }
             opposite := negated ? prefix : "!" prefix
 
-            toDelete := []
-            for title in titles {
-                if (not negated and this._titlesMap[opposite].Has(title)) {
-                    toDelete.Push(title)
+            if (not negated) {
+                for title in titles {
+                    if (this._titlesMap[opposite].Has(title)) {
+                        titles.Delete(title)
+                    }
                 }
-            }
-            for title in toDelete {
-                titles.Delete(title)
             }
         }
     }
@@ -63,7 +61,7 @@ class TitleFilter {
         return ret
     }
 
-    _CreateWindowTitlesMap(windowTitles) {
+    _BakeWindowTitlesMap(windowTitles) {
         if (windowTitles.Length == 0) {
             return
         }
@@ -160,7 +158,11 @@ class TitleFilter {
 
 
 DebugDescribeWindow(hwnd) {
-    return WinGetTitle(hwnd) " (" hwnd "), class: " WinGetClass(hwnd) ", PID: " WinGetPID(hwnd)
+    try {
+        return WinGetTitle(hwnd) " (" hwnd "), class: " WinGetClass(hwnd) ", PID: " WinGetPID(hwnd)
+    } catch {
+        return "<unknown> (" hwnd ")"
+    }
 }
 
 class WinCalls {
@@ -214,7 +216,20 @@ class WinCalls {
      * @param {(Integer)} offsetBottom
      * @returns {(Boolean)} - true if the position and size were successfully retrieved, false otherwise
      */
-    static WinGetPosEx(windowHwnd, &x:=0, &y:=0, &width:=0, &height:=0, &right:=0, &bottom:=0, getOffset:=false, &offsetX:=0, &offsetY:=0, &offsetRight:=0, &offsetBottom:=0) {
+    static WinGetPosEx(
+        windowHwnd,
+        &x:=0,
+        &y:=0,
+        &width:=0,
+        &height:=0,
+        &right:=0,
+        &bottom:=0,
+        getOffset:=false,
+        &offsetX:=0,
+        &offsetY:=0,
+        &offsetRight:=0,
+        &offsetBottom:=0
+    ) {
         rect := Buffer(16,0)
         try {
             DllCall(
