@@ -34,7 +34,9 @@ class ClsCountedFlagInvocation {
 
 
 class ClsWindowManager {
-    __New() {
+    __New(ctx) {
+        this._ctx := ctx
+
         this._eventManager := 0
         this._messenger := 0
 
@@ -70,7 +72,7 @@ class ClsWindowManager {
             "!ahk_exe MateEngineX.exe",  ; exclude the mate engine
         ])
         this._navigators := Map()
-        this.spatialNavigator := ClsSpatialWindowNavigator(this)
+        this.spatialNavigator := ClsSpatialWindowNavigator(ctx)
         this._SetupWindowSwitchWatch_Bind := this._SetupWindowSwitchWatch.Bind(this)
         this._OnShellHookMessage_Bind := this._OnShellHookMessage.Bind(this)
 
@@ -102,15 +104,20 @@ class ClsWindowManager {
      * @description Get the window ID of a window or 0 if the window is non-interactive or doesn't exist
      * @param {(String)} ahkWindowTitle
      * @param {(Boolean)} detectHidden
+     * @param {(Boolean)} interactableOnly
+     * @param {(Boolean)} detectMinimized
      */
-    GetID(ahkWindowTitle, detectHidden:=false, interactiveOnly:=true) {
+    GetID(ahkWindowTitle, detectHidden:=false, interactableOnly:=true, detectMinimized:=true) {
         if (detectHidden) {
             prevDetectHidden := A_DetectHiddenWindows
             DetectHiddenWindows(1)
         }
         try {
             id := WinGetID(ahkWindowTitle)
-            if (not interactiveOnly or this.IsInteractiveWindow(id))
+            if (
+                (not interactableOnly or this.IsInteractableWindow(id))
+                and (detectMinimized or WinGetMinMax(id) != WIN_MINIMIZED)
+            )
                 return id
         } finally {
             if (detectHidden) {
@@ -123,9 +130,11 @@ class ClsWindowManager {
     /**
      * @description Get the list of window IDs of a window or an empty array if the window is non-interactive or doesn't exist
      * @param {(String)} ahkWindowTitle
-     * @param {(Boolean)} detectHidden
+     * @param {(Boolean)} detectHidden - whether to detect hidden windows
+     * @param {(Boolean)} interactableOnly - whether to only return interactable windows
+     * @param {(Boolean)} detectMinimized - whether to detect minimized windows
      */
-    GetList(ahkWindowTitle:='', detectHidden:=false, interactiveOnly:=true) {
+    GetList(ahkWindowTitle:='', detectHidden:=false, interactableOnly:=true, detectMinimized:=true) {
         if (detectHidden) {
             prevDetectHidden := DetectHiddenWindows(1)
         }
@@ -133,9 +142,12 @@ class ClsWindowManager {
         
         res := []
 
-        if (interactiveOnly) {
+        if (interactableOnly) {
             for id in list {
-                if (this.IsInteractiveWindow(id))
+                if (
+                    (this.IsInteractableWindow(id))
+                    and (detectMinimized or WinGetMinMax(id) != WIN_MINIMIZED)
+                )
                     res.Push(id)
             }
         } else {
@@ -148,7 +160,7 @@ class ClsWindowManager {
         return res
     }
 
-    IsInteractiveWindow(hwnd) {
+    IsInteractableWindow(hwnd) {
         if (!hwnd)
             return false
 
@@ -569,7 +581,7 @@ class ClsWindowManager {
             return this._navigators[exeSelector]
         } else {
             return (
-                this._navigators[exeSelector] := ClsSequenceWindowNavigator(this, exeSelector)
+                this._navigators[exeSelector] := ClsSequenceWindowNavigator(this._ctx, exeSelector)
             )
         }
     }

@@ -12,7 +12,7 @@ UseFixMouseOnKBWindowFocus(focusTitles:=0) {
     eventManager.On(EV_WINDOW_FOCUSED_WITH_KB, MouseFollowFocus)
     MouseFollowFocus(newHwnd) {
         if (
-            !windowManager.IsInteractiveWindow(newHwnd)
+            !windowManager.IsInteractableWindow(newHwnd)
             or (focusTitles and not focusTitles.TestWindow(newHwnd))
         )
             return
@@ -38,7 +38,7 @@ UseFlashFocusWindows(focusTitles:=0, dontStealMouse:=true) {
     FocusNewWindow(hwnd, mouseJustMoved) {
         if (
             (mouseJustMoved and dontStealMouse)
-            or !windowManager.IsInteractiveWindow(hwnd)
+            or !windowManager.IsInteractableWindow(hwnd)
             or (focusTitles and not focusTitles.TestWindow(hwnd))
         )
             return

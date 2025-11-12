@@ -3,7 +3,9 @@
 
 ; TODO: Maybe... I don't really need to complicate things to this extent???
 class ClsEventBus {
-    __New() {
+    __New(ctx) {
+        this._ctx := ctx
+
         ; { eventId: { (originalHandler): { once: bool } } }
         this._events := Map()
 

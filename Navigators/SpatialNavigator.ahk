@@ -15,16 +15,40 @@
  *         Sqrt(intersectionArea) / Sqrt(window1Area + window2Area) > intersectionThreshold
  */
 class ClsSpatialWindowNavigator {
-    __New(windowManager, listSelector:='', currentSelector:='A', intersectionThreshold:=Config.NAVIGATION_INTERSECTION_THRESHOLD) {
-        this._windowManager := windowManager
+    __New(ctx, listSelector:='', currentSelector:='A', intersectionThreshold:=Config.NAVIGATION_INTERSECTION_THRESHOLD) {
+        this._ctx := ctx
         this._listSelector := listSelector
         this._currentSelector := currentSelector
-        this._currentHwnd := 0
         this._intersectionThreshold := intersectionThreshold
     }
 
+    _GetCurrent() {
+        try {
+            hwnd := this._ctx.windowManager.GetID(this._currentSelector,,, false)
+            if (hwnd)
+                return hwnd
+        }
+        return -this._ctx.monitorManager.GetFocused()
+    }
+
     _GetCoords(hwnd, &l, &r, &t, &b) {
-        WinCalls.WinGetPosEx(hwnd, &l, &t,,, &r, &b)
+        if (hwnd < 0) {
+            rect := this._ctx.monitorManager.GetByIndex(-hwnd)
+            l := rect.rect[1]
+            r := rect.rect[3]
+            t := rect.rect[2]
+            b := rect.rect[4]
+        } else {
+            WinCalls.WinGetPosEx(hwnd, &l, &t,,, &r, &b)
+        }
+    }
+
+    _GetTargets() {
+        winList := this._ctx.windowManager.GetList(this._listSelector,,, false)
+        for mon in this._ctx.monitorManager.GetAll() {
+            winList.Push(-mon.index)
+        }
+        return winList
     }
 
     /**
@@ -108,14 +132,15 @@ class ClsSpatialWindowNavigator {
      *   - `3` - bottom
      */
     _GetFromSide(side) {
-        try {
-            curHwnd := this._windowManager.GetID(this._currentSelector)
-        } catch {
-            return 0
+        curHwnd := this._GetCurrent()
+        OutputDebug("Current window: " DebugDescribeWindow(curHwnd))
+        if (curHwnd == 0) {
+            return curHwnd
         }
         this._GetCoords(curHwnd, &l, &r, &t, &b)
 
-        winList := this._windowManager.GetList(this._listSelector)
+        winList := this._GetTargets()
+        OutputDebug("Win list: " winList.Length)
         if (winList.Length == 0)
             return 0
 
@@ -196,13 +221,13 @@ class ClsSpatialWindowNavigator {
      */
     NextOverlapping() {
         try {
-            curHwnd := this._windowManager.GetID(this._currentSelector)
+            curHwnd := this._ctx.windowManager.GetID(this._currentSelector)
         } catch {
             return 0
         }
         this._GetCoords(curHwnd, &l, &r, &t, &b)
 
-        winList := this._windowManager.GetList(this._listSelector)
+        winList := this._ctx.windowManager.GetList(this._listSelector)
         if (winList.Length == 0)
             return 0
 

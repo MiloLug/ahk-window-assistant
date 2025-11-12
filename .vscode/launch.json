@@ -10,6 +10,13 @@
             "name": "AHK dbg MAIN",
             "program": "${workspaceFolder}\\Main.ahk",
             "stopOnEntry": true
+        },
+        {
+            "type": "ahk2",
+            "request": "launch",
+            "name": "AHK dbg DEBUG RUN",
+            "program": "${workspaceFolder}\\DebugRun.ahk",
+            "stopOnEntry": true
         }
     ]
 }

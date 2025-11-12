@@ -78,4 +78,13 @@ class Geometry {
     static GetArea(r) {
         return (r[3] - r[1]) * (r[4] - r[2])
     }
+
+    static PointInRect(x, y, r) {
+        return x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
+    }
+
+    static RectCenter(r, &x, &y) {
+        x := r[1] + (r[3] - r[1]) / 2
+        y := r[2] + (r[4] - r[2]) / 2
+    }
 }

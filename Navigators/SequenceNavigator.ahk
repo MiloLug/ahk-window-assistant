@@ -11,8 +11,8 @@
  * @param {(String)} currentSelector - the selector to use to get the current window
  */
 class ClsSequenceWindowNavigator {
-    __New(windowManager, listSelector:='', currentSelector:='A') {
-        this._windowManager := windowManager
+    __New(ctx, listSelector:='', currentSelector:='A') {
+        this._ctx := ctx
         this._windows := []
         this._windowsMap := Map()
         this._listSelector := listSelector
@@ -29,7 +29,7 @@ class ClsSequenceWindowNavigator {
         ObjAddRef(ObjPtr(this))
         SetTimer(this._EndNavigation_Bind, 0)
         this._EndNavigation_Bind := 0
-        this._windowManager := 0
+        this._ctx := 0
     }
 
     /**
@@ -61,7 +61,7 @@ class ClsSequenceWindowNavigator {
      */
     _UpdateWindowsList() {
         newMap := Map()
-        newWindows := this._windowManager.GetList(this._listSelector, true)
+        newWindows := this._ctx.windowManager.GetList(this._listSelector, true)
         if (newWindows.Length == 0) {
             this._windows := []
             this._windowsMap.Clear()

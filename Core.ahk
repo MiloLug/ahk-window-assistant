@@ -1,19 +1,13 @@
 #Requires AutoHotkey v2.0
 
-#Include VirtualDesktopManager.ahk
-#Include Events.ahk
-#Include WindowManager.ahk
-#Include MonitorManager.ahk
+#Include Context.ahk
 
 
-eventManager := ClsEventBus()
-desktopManager := ClsVirtualDesktopManager()
-windowManager := ClsWindowManager()
-monitorManager := ClsMonitorManager()
+ctx := ClsContext()
 
-windowManager.RegisterEventManager(eventManager)
-desktopManager.RegisterEventManager(eventManager)
-
+eventManager := ctx.eventManager
+windowManager := ctx.windowManager
+desktopManager := ctx.desktopManager
 
 SetInteractableWindowsFilter(filter) {
     windowManager.SetInteractableWindowsFilter(filter)
@@ -71,35 +65,30 @@ MoveMouseToWindow(windowHwnd) {
     return true
 }
 
-GoToLeftWindow() {
-    windowHwnd := windowManager.spatialNavigator.GetLeft()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
+WinMonActivate(windowHwnd) {
+    if (windowHwnd < 0) {
+        monitor := ctx.monitorManager.GetByIndex(-windowHwnd)
+        monitor.Activate()
+    } else if (windowHwnd > 0) {
+        OutputDebug("Activating window: " DebugDescribeWindow(windowHwnd))
+        ctx.eventManager.Trigger(EV_WINDOW_FOCUSED_WITH_KB, windowHwnd)
     }
+}
+
+GoToLeftWindow() {
+    WinMonActivate(windowManager.spatialNavigator.GetLeft())
 }
 GoToRightWindow() {
-    windowHwnd := windowManager.spatialNavigator.GetRight()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
-    }
+    WinMonActivate(windowManager.spatialNavigator.GetRight())
 }
 GoToTopWindow() {
-    windowHwnd := windowManager.spatialNavigator.GetTop()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
-    }
+    WinMonActivate(windowManager.spatialNavigator.GetTop())
 }
 GoToBottomWindow() {
-    windowHwnd := windowManager.spatialNavigator.GetBottom()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
-    }
+    WinMonActivate(windowManager.spatialNavigator.GetBottom())
 }
 GoToNextOverlappingWindow() {
-    windowHwnd := windowManager.spatialNavigator.NextOverlapping()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
-    }
+    WinMonActivate(windowManager.spatialNavigator.NextOverlapping())
 }
 
 SafeWinClose(ahkWindowTitle) {

@@ -20,14 +20,25 @@ class ClsMonitor {
     ToDebugString() {
         return "Monitor " this.index " - " this.name " - (" IterJoin(this.rect, ", ") ")"
     }
+
+    Activate() {
+        Geometry.RectCenter(this.rect, &x, &y)
+        OutputDebug("Activating monitor " this.index " at " x ", " y)
+        WinActivate('ahk_class Progman')
+        MouseMove(x, y)
+    }
 }
 
 
 class ClsMonitorManager {
-    __New() {
+    __New(ctx) {
+        this._ctx := ctx
+
         ; { monitorIndex: ClsMonitor }
         this._monitors := []
+
         ; Monitors naturally ordered by their position left-to-right, top-to-bottom
+        ; Improves coordinate-based lookups
         this._monitorsOrdered := []
 
         this._UpdateMonitors()
@@ -51,7 +62,6 @@ class ClsMonitorManager {
             this._monitorsOrdered.Push(monitor)
         }
 
-        ; TODO: Actually have no idea if I'll need this bit...
         static rectComparator(a, b) {
             ; Sort left-top to right-bottom
             yDiff := a.rect[2] - b.rect[2]
@@ -63,5 +73,27 @@ class ClsMonitorManager {
         }
 
         ArrSort(this._monitorsOrdered, rectComparator)
+    }
+
+    GetFocused() {
+        MouseGetPos(&x, &y)
+        return this.GetByCoords(x, y).index
+    }
+
+    GetByCoords(x, y) {
+        for monitor in this._monitorsOrdered {
+            if (Geometry.PointInRect(x, y, monitor.rect)) {
+                return monitor
+            }
+        }
+        return 0
+    }
+
+    GetByIndex(index) {
+        return this._monitors[index]
+    }
+
+    GetAll() {
+        return this._monitorsOrdered
     }
 }
