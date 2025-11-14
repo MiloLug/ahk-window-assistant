@@ -36,8 +36,8 @@ class Geometry {
     static CalcIntersectionDistance(s, sDir, r) {
         return (
             sDir == 0
-                ? (r[2] < s[2] ? s[2] : r[2]) - (r[4] < s[4] ? s[4] : r[4])
-                : (r[1] < s[1] ? s[1] : r[1]) - (r[3] < s[3] ? s[3] : r[3])
+                ? (r[2] < s[2] ? s[2] : r[2]) - (r[4] > s[4] ? s[4] : r[4])
+                : (r[1] < s[1] ? s[1] : r[1]) - (r[3] > s[3] ? s[3] : r[3])
         )
     }
 
