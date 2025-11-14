@@ -1,19 +1,13 @@
 #Requires AutoHotkey v2.0
 
-#Include VirtualDesktopManager.ahk
-#Include Events.ahk
-#Include WindowManager.ahk
-#Include MonitorManager.ahk
+#Include Context.ahk
 
 
-eventManager := ClsEventBus()
-desktopManager := ClsVirtualDesktopManager()
-windowManager := ClsWindowManager()
-monitorManager := ClsMonitorManager()
+ctx := ClsContext()
 
-windowManager.RegisterEventManager(eventManager)
-desktopManager.RegisterEventManager(eventManager)
-
+eventManager := ctx.eventManager
+windowManager := ctx.windowManager
+desktopManager := ctx.desktopManager
 
 SetInteractableWindowsFilter(filter) {
     windowManager.SetInteractableWindowsFilter(filter)
@@ -50,10 +44,8 @@ GoToDesktop(n, restoreMousePosition:=true) {
 PinAndSetOnTop(ahkWindowTitle) {
     hwnd := windowManager.GetID(ahkWindowTitle)
     if (desktopManager.ToggleWindowPin(hwnd)) {
-        OutputDebug("Pinning window " hwnd)
         windowManager.SetAlwaysOnTop(hwnd, 1)
     } else {
-        OutputDebug("Unpinning window " hwnd)
         windowManager.SetAlwaysOnTop(hwnd, 0)
     }
 }
@@ -62,7 +54,7 @@ MoveMouseToWindow(windowHwnd) {
     try {
         WinGetPos(&winX, &winY, &winWidth, &winHeight, windowHwnd)
     } catch {
-        OutputDebug("Failed to get position of window " windowHwnd)
+        OutputDebug("Failed to get position of " DebugDescribeTarget(windowHwnd))
         return false
     }
     mouseX := winX + winWidth * 0.5
@@ -71,35 +63,29 @@ MoveMouseToWindow(windowHwnd) {
     return true
 }
 
-GoToLeftWindow() {
-    windowHwnd := windowManager.spatialNavigator.GetLeft()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
+WinMonActivate(windowHwnd) {
+    OutputDebug("Activating " DebugDescribeTarget(windowHwnd))
+    if (windowHwnd < 0) {
+        ctx.monitorManager.Activate(-windowHwnd)
+    } else if (windowHwnd > 0) {
+        ctx.eventManager.Trigger(EV_WINDOW_FOCUSED_WITH_KB, windowHwnd)
     }
+}
+
+GoToLeftWindow() {
+    WinMonActivate(windowManager.spatialNavigator.GetLeft())
 }
 GoToRightWindow() {
-    windowHwnd := windowManager.spatialNavigator.GetRight()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
-    }
+    WinMonActivate(windowManager.spatialNavigator.GetRight())
 }
 GoToTopWindow() {
-    windowHwnd := windowManager.spatialNavigator.GetTop()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
-    }
+    WinMonActivate(windowManager.spatialNavigator.GetTop())
 }
 GoToBottomWindow() {
-    windowHwnd := windowManager.spatialNavigator.GetBottom()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
-    }
+    WinMonActivate(windowManager.spatialNavigator.GetBottom())
 }
 GoToNextOverlappingWindow() {
-    windowHwnd := windowManager.spatialNavigator.NextOverlapping()
-    if (windowHwnd != 0) {
-        WinActivate(windowHwnd)
-    }
+    WinMonActivate(windowManager.spatialNavigator.NextOverlapping())
 }
 
 SafeWinClose(ahkWindowTitle) {

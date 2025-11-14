@@ -11,7 +11,9 @@ class VirtualDesktopError extends Error {
 
 
 class ClsVirtualDesktopManager {
-    __New() {
+    __New(ctx) {
+        this._ctx := ctx
+
         dllPath := A_ScriptDir . "\VirtualDesktopAccessor.dll"
         
         ; Check if DLL exists before attempting to load

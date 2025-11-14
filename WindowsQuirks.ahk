@@ -12,7 +12,7 @@ UseFixMouseOnKBWindowFocus(focusTitles:=0) {
     eventManager.On(EV_WINDOW_FOCUSED_WITH_KB, MouseFollowFocus)
     MouseFollowFocus(newHwnd) {
         if (
-            !windowManager.IsInteractiveWindow(newHwnd)
+            !windowManager.IsInteractableWindow(newHwnd)
             or (focusTitles and not focusTitles.TestWindow(newHwnd))
         )
             return
@@ -20,9 +20,9 @@ UseFixMouseOnKBWindowFocus(focusTitles:=0) {
         try {
             WinActivate(newHwnd)
             MoveMouseToWindow(newHwnd)
-            OutputDebug("Focused window on KB: " newHwnd)
+            OutputDebug("Focused on KB: " DebugDescribeTarget(newHwnd))
         } catch {
-            OutputDebug("Failed to focus window on KB: " newHwnd)
+            OutputDebug("Failed to focus on KB: " DebugDescribeTarget(newHwnd))
         }
     }
 }
@@ -38,7 +38,7 @@ UseFlashFocusWindows(focusTitles:=0, dontStealMouse:=true) {
     FocusNewWindow(hwnd, mouseJustMoved) {
         if (
             (mouseJustMoved and dontStealMouse)
-            or !windowManager.IsInteractiveWindow(hwnd)
+            or !windowManager.IsInteractableWindow(hwnd)
             or (focusTitles and not focusTitles.TestWindow(hwnd))
         )
             return
@@ -46,9 +46,9 @@ UseFlashFocusWindows(focusTitles:=0, dontStealMouse:=true) {
         try {
             WinActivate(hwnd)
             MoveMouseToWindow(hwnd)
-            OutputDebug("Focused new window: " hwnd)
+            OutputDebug("Focused new: " DebugDescribeTarget(hwnd))
         } catch {
-            OutputDebug("Failed to focus new window: " hwnd)
+            OutputDebug("Failed to focus new: " DebugDescribeTarget(hwnd))
         }
     }
 }

@@ -19,6 +19,7 @@ class Geometry {
      * 
      * S defined by:
      *     points 1 (sX1, sY1) and 2 (sX2, sY2) for two boundaries
+     *         (s[1], s[2]) and (s[3], s[4]) so it can be defined by a rect
      *     direction - vertical or horizontal
      * 
      * R defined by:
@@ -26,20 +27,17 @@ class Geometry {
      * 
      * Returns the LENGTH of the intersection
      * 
-     * @param {(Integer)} sX1
-     * @param {(Integer)} sY1
-     * @param {(Integer)} sX2
-     * @param {(Integer)} sY2
+     * @param {(Array)} s - Rect to define the plane
      * @param {(Integer)} sDir - vertical or horizontal
      *   - 0 - horizontal
      *   - 1 - vertical
      * @param {(Array)} r - Rect
      */
-    static CalcIntersectionDistance(sX1, sY1, sX2, sY2, sDir, r) {
+    static CalcIntersectionDistance(s, sDir, r) {
         return (
             sDir == 0
-                ? (r[2] < sY1 ? sY1 : r[2]) - (r[4] < sY2 ? sY2 : r[4])
-                : (r[1] < sX1 ? sX1 : r[1]) - (r[3] < sX2 ? sX2 : r[3])
+                ? (r[2] < s[2] ? s[2] : r[2]) - (r[4] > s[4] ? s[4] : r[4])
+                : (r[1] < s[1] ? s[1] : r[1]) - (r[3] > s[3] ? s[3] : r[3])
         )
     }
 
@@ -71,11 +69,28 @@ class Geometry {
         )
     }
 
+    /**
+     * @description Create a rect from two points
+     * @param {(Integer)} x1
+     * @param {(Integer)} y1
+     * @param {(Integer)} x2
+     * @param {(Integer)} y2
+     * @returns {(Array)} - the rect
+     */
     static Rect(x1, y1, x2, y2) {
         return [x1, y1, x2, y2]
     }
 
     static GetArea(r) {
         return (r[3] - r[1]) * (r[4] - r[2])
+    }
+
+    static PointInRect(x, y, r) {
+        return x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
+    }
+
+    static RectCenter(r, &x, &y) {
+        x := r[1] + (r[3] - r[1]) / 2
+        y := r[2] + (r[4] - r[2]) / 2
     }
 }
