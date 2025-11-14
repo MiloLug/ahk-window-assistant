@@ -103,9 +103,9 @@ class ClsWindowManager {
     /**
      * @description Get the window ID of a window or 0 if the window is non-interactive or doesn't exist
      * @param {(String)} ahkWindowTitle
-     * @param {(Boolean)} detectHidden
-     * @param {(Boolean)} interactableOnly
-     * @param {(Boolean)} detectMinimized
+     * @param {(Boolean)} detectHidden - if true, will detect hidden windows (DetectHiddenWindows ahk flag)
+     * @param {(Boolean)} interactableOnly - if false, will return non-interactive windows as tooltips, disabled etc.
+     * @param {(Boolean)} detectMinimized - if false, won't return minimized windows
      */
     GetID(ahkWindowTitle, detectHidden:=false, interactableOnly:=true, detectMinimized:=true) {
         if (detectHidden) {
@@ -130,9 +130,9 @@ class ClsWindowManager {
     /**
      * @description Get the list of window IDs of a window or an empty array if the window is non-interactive or doesn't exist
      * @param {(String)} ahkWindowTitle
-     * @param {(Boolean)} detectHidden - whether to detect hidden windows
-     * @param {(Boolean)} interactableOnly - whether to only return interactable windows
-     * @param {(Boolean)} detectMinimized - whether to detect minimized windows
+     * @param {(Boolean)} detectHidden - if true, will detect hidden windows (DetectHiddenWindows ahk flag)
+     * @param {(Boolean)} interactableOnly - if false, will return non-interactive windows as tooltips, disabled etc.
+     * @param {(Boolean)} detectMinimized - if false, won't return minimized windows
      */
     GetList(ahkWindowTitle:='', detectHidden:=false, interactableOnly:=true, detectMinimized:=true) {
         if (detectHidden) {
@@ -160,6 +160,11 @@ class ClsWindowManager {
         return res
     }
 
+    /**
+     * @description Check if a window is interactable, can be focused, not disabled etc.
+     * @param {(Integer)} hwnd
+     * @returns {(Boolean)}
+     */
     IsInteractableWindow(hwnd) {
         if (!hwnd)
             return false

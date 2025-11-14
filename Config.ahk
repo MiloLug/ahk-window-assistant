@@ -36,5 +36,11 @@ class Config {
      * Higher = stricter overlap requirement for considering windows as "overlapping"
      */
     static NAVIGATION_INTERSECTION_THRESHOLD := 0.1
+
+    /**
+     * Consider monitors as being on the same level (same row, y)
+     * withing this threshold in pixels, while sorting them 'naturally'
+     */
+    static MONITOR_SAME_LEVEL_THRESHOLD := 400
 }
 

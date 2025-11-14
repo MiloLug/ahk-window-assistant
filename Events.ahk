@@ -20,7 +20,6 @@ class ClsEventBus {
     __Delete() {
         ; Maybe add some trigger on remove here
         ObjAddRef(ObjPtr(this))
-        OutputDebug("Event bus deleted")
     }
 
     _SetupMouseMovedEvent() {

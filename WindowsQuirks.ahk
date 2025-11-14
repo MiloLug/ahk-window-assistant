@@ -20,9 +20,9 @@ UseFixMouseOnKBWindowFocus(focusTitles:=0) {
         try {
             WinActivate(newHwnd)
             MoveMouseToWindow(newHwnd)
-            OutputDebug("Focused window on KB: " newHwnd)
+            OutputDebug("Focused on KB: " DebugDescribeTarget(newHwnd))
         } catch {
-            OutputDebug("Failed to focus window on KB: " newHwnd)
+            OutputDebug("Failed to focus on KB: " DebugDescribeTarget(newHwnd))
         }
     }
 }
@@ -46,9 +46,9 @@ UseFlashFocusWindows(focusTitles:=0, dontStealMouse:=true) {
         try {
             WinActivate(hwnd)
             MoveMouseToWindow(hwnd)
-            OutputDebug("Focused new window: " hwnd)
+            OutputDebug("Focused new: " DebugDescribeTarget(hwnd))
         } catch {
-            OutputDebug("Failed to focus new window: " hwnd)
+            OutputDebug("Failed to focus new: " DebugDescribeTarget(hwnd))
         }
     }
 }

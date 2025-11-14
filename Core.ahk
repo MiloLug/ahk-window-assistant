@@ -44,10 +44,8 @@ GoToDesktop(n, restoreMousePosition:=true) {
 PinAndSetOnTop(ahkWindowTitle) {
     hwnd := windowManager.GetID(ahkWindowTitle)
     if (desktopManager.ToggleWindowPin(hwnd)) {
-        OutputDebug("Pinning window " hwnd)
         windowManager.SetAlwaysOnTop(hwnd, 1)
     } else {
-        OutputDebug("Unpinning window " hwnd)
         windowManager.SetAlwaysOnTop(hwnd, 0)
     }
 }
@@ -56,7 +54,7 @@ MoveMouseToWindow(windowHwnd) {
     try {
         WinGetPos(&winX, &winY, &winWidth, &winHeight, windowHwnd)
     } catch {
-        OutputDebug("Failed to get position of window " windowHwnd)
+        OutputDebug("Failed to get position of " DebugDescribeTarget(windowHwnd))
         return false
     }
     mouseX := winX + winWidth * 0.5
@@ -66,11 +64,10 @@ MoveMouseToWindow(windowHwnd) {
 }
 
 WinMonActivate(windowHwnd) {
+    OutputDebug("Activating " DebugDescribeTarget(windowHwnd))
     if (windowHwnd < 0) {
-        monitor := ctx.monitorManager.GetByIndex(-windowHwnd)
-        monitor.Activate()
+        ctx.monitorManager.Activate(-windowHwnd)
     } else if (windowHwnd > 0) {
-        OutputDebug("Activating window: " DebugDescribeWindow(windowHwnd))
         ctx.eventManager.Trigger(EV_WINDOW_FOCUSED_WITH_KB, windowHwnd)
     }
 }

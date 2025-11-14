@@ -20,13 +20,6 @@ class ClsMonitor {
     ToDebugString() {
         return "Monitor " this.index " - " this.name " - (" IterJoin(this.rect, ", ") ")"
     }
-
-    Activate() {
-        Geometry.RectCenter(this.rect, &x, &y)
-        OutputDebug("Activating monitor " this.index " at " x ", " y)
-        WinActivate('ahk_class Progman')
-        MouseMove(x, y)
-    }
 }
 
 
@@ -65,8 +58,7 @@ class ClsMonitorManager {
         static rectComparator(a, b) {
             ; Sort left-top to right-bottom
             yDiff := a.rect[2] - b.rect[2]
-            threshold := 400  ; Consider same row within this threshold
-            if (Abs(yDiff) > threshold) {
+            if (Abs(yDiff) > Config.MONITOR_SAME_LEVEL_THRESHOLD) {
                 return yDiff
             }
             return a.rect[1] - b.rect[1]
@@ -86,7 +78,7 @@ class ClsMonitorManager {
                 return monitor
             }
         }
-        return 0
+        return 1
     }
 
     GetByIndex(index) {
@@ -95,5 +87,16 @@ class ClsMonitorManager {
 
     GetAll() {
         return this._monitorsOrdered
+    }
+
+    Activate(index) {
+        if (index < 0 || index > this._monitors.Length) {
+            return false
+        }
+        monitor := this._monitors[index]
+        Geometry.RectCenter(monitor.rect, &x, &y)
+        WinActivate('ahk_class Progman')
+        MouseMove(x, y)
+        return true
     }
 }

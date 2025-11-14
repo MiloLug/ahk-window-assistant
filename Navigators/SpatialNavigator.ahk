@@ -31,15 +31,12 @@ class ClsSpatialWindowNavigator {
         return -this._ctx.monitorManager.GetFocused()
     }
 
-    _GetCoords(hwnd, &l, &r, &t, &b) {
+    _GetCoords(hwnd) {
         if (hwnd < 0) {
-            rect := this._ctx.monitorManager.GetByIndex(-hwnd)
-            l := rect.rect[1]
-            r := rect.rect[3]
-            t := rect.rect[2]
-            b := rect.rect[4]
+            return this._ctx.monitorManager.GetByIndex(-hwnd).rect
         } else {
             WinCalls.WinGetPosEx(hwnd, &l, &t,,, &r, &b)
+            return Geometry.Rect(l, t, r, b)
         }
     }
 
@@ -133,63 +130,57 @@ class ClsSpatialWindowNavigator {
      */
     _GetFromSide(side) {
         curHwnd := this._GetCurrent()
-        OutputDebug("Current window: " DebugDescribeWindow(curHwnd))
+        OutputDebug("Current: " DebugDescribeTarget(curHwnd))
         if (curHwnd == 0) {
             return curHwnd
         }
-        this._GetCoords(curHwnd, &l, &r, &t, &b)
+        curRect := this._GetCoords(curHwnd)
 
         winList := this._GetTargets()
-        OutputDebug("Win list: " winList.Length)
         if (winList.Length == 0)
             return 0
 
         distances := []
 
-        ; I know, this is ugly, but it's faster than assigning a filter function to each side
         switch side {
             case 0:
                 for winHwnd in winList {
-                    this._GetCoords(winHwnd, &cL, &cR, &cT, &cB)
-                    cRect := Geometry.Rect(cL, cT, cR, cB)
-                    if (cR <= l)
+                    checkRect := this._GetCoords(winHwnd)
+                    if (checkRect[3] <= curRect[1])
                         distances.Push([
-                            Geometry.CalcIntersectionDistance(l, t, r, b, 0, cRect),
+                            Geometry.CalcIntersectionDistance(curRect, 0, checkRect),
                             winHwnd,
-                            cRect
+                            checkRect
                         ])
                 }
             case 1:
                 for winHwnd in winList {
-                    this._GetCoords(winHwnd, &cL, &cR, &cT, &cB)
-                    cRect := Geometry.Rect(cL, cT, cR, cB)
-                    if (cL >= r)
+                    checkRect := this._GetCoords(winHwnd)
+                    if (checkRect[1] >= curRect[3])
                         distances.Push([
-                            Geometry.CalcIntersectionDistance(l, t, r, b, 0, cRect),
+                            Geometry.CalcIntersectionDistance(curRect, 0, checkRect),
                             winHwnd,
-                            cRect
+                            checkRect
                         ])
                 }
             case 2:
                 for winHwnd in winList {
-                    this._GetCoords(winHwnd, &cL, &cR, &cT, &cB)
-                    cRect := Geometry.Rect(cL, cT, cR, cB)
-                    if (cB <= t)
+                    checkRect := this._GetCoords(winHwnd)
+                    if (checkRect[4] <= curRect[2])
                         distances.Push([
-                            Geometry.CalcIntersectionDistance(l, t, r, b, 1, cRect),
+                            Geometry.CalcIntersectionDistance(curRect, 1, checkRect),
                             winHwnd,
-                            cRect
+                            checkRect
                         ])
                 }
             case 3:
                 for winHwnd in winList {
-                    this._GetCoords(winHwnd, &cL, &cR, &cT, &cB)
-                    cRect := Geometry.Rect(cL, cT, cR, cB)
-                    if (cT >= b)
+                    checkRect := this._GetCoords(winHwnd)
+                    if (checkRect[2] >= curRect[4])
                         distances.Push([
-                            Geometry.CalcIntersectionDistance(l, t, r, b, 1, cRect),
+                            Geometry.CalcIntersectionDistance(curRect, 1, checkRect),
                             winHwnd,
-                            cRect
+                            checkRect
                         ])
                 }
         }
@@ -225,21 +216,18 @@ class ClsSpatialWindowNavigator {
         } catch {
             return 0
         }
-        this._GetCoords(curHwnd, &l, &r, &t, &b)
+        curRect := this._GetCoords(curHwnd)
 
         winList := this._ctx.windowManager.GetList(this._listSelector)
         if (winList.Length == 0)
             return 0
 
         for winHwnd in ArrReversedIter(winList) {
-            this._GetCoords(winHwnd, &wL, &wR, &wT, &wB)
+            checkRect := this._GetCoords(winHwnd)
             if (
                 winHwnd != curHwnd
-                and wL <= r and wR >= l and wT <= b and wB >= t
-                ; to avoid overlapping with neighboring-edged windows
-                and wL != r and wT != b and wR != l and wB != t
+                and Geometry.DoRectanglesIntersect(curRect, checkRect)
             ) {
-                OutputDebug("Overlapping window: " winHwnd)
                 return winHwnd
             }
         }

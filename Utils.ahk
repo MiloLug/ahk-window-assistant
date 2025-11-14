@@ -157,11 +157,19 @@ class TitleFilter {
 }
 
 
-DebugDescribeWindow(hwnd) {
+/**
+ * @description Describe a target (window or monitor) in a human-readable format
+ * @param {(Integer)} hwnd - the target handle
+ * @returns {(String)}
+ */
+DebugDescribeTarget(hwnd) {
     try {
-        return WinGetTitle(hwnd) " (" hwnd "), class: " WinGetClass(hwnd) ", PID: " WinGetPID(hwnd)
+        if (hwnd < 0) {
+            return "<Monitor> " MonitorGetName(-hwnd) " (" (-hwnd) ")" 
+        }
+        return "<Window> " WinGetTitle(hwnd) " (" hwnd "), class: " WinGetClass(hwnd) ", PID: " WinGetPID(hwnd)
     } catch {
-        return "<unknown> (" hwnd ")"
+        return "<Unknown> (" hwnd ")"
     }
 }
 
