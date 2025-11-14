@@ -84,14 +84,18 @@ GoToTopWindow() {
 GoToBottomWindow() {
     WinMonActivate(windowManager.spatialNavigator.GetBottom())
 }
-GoToNextOverlappingWindow() {
-    WinMonActivate(windowManager.spatialNavigator.NextOverlapping())
+GoToNextOverlappedWindow() {
+    WinMonActivate(windowManager.spatialNavigator.NextOverlapped())
 }
 
-SafeWinClose(ahkWindowTitle) {
-    id := windowManager.GetID(ahkWindowTitle)
+SafeCloseCurrent() {
+    switchTo := windowManager.spatialNavigator.ClosestOverlapped()
+    id := windowManager.GetID("A")
     if (id != 0)
         WinClose(id)
+
+    if (switchTo != 0)
+        WinMonActivate(switchTo)
 }
 
 SwitchCapsLock() {

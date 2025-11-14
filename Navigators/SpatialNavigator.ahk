@@ -27,6 +27,7 @@ class ClsSpatialWindowNavigator {
             hwnd := this._ctx.windowManager.GetID(this._currentSelector,,, false)
             if (hwnd)
                 return hwnd
+        } catch {
         }
         return -this._ctx.monitorManager.GetFocused()
     }
@@ -213,7 +214,7 @@ class ClsSpatialWindowNavigator {
     /**
      * @description Find the next overlapping window in Z-order
      */
-    NextOverlapping() {
+    NextOverlapped() {
         try {
             curHwnd := this._ctx.windowManager.GetID(this._currentSelector)
         } catch {
@@ -233,6 +234,43 @@ class ClsSpatialWindowNavigator {
             ) {
                 return winHwnd
             }
+        }
+        return 0
+    }
+
+    /**
+     * @description Find the closest window, overlapped by the current window
+     */
+    ClosestOverlapped() {
+        curHwnd := this._GetCurrent()
+        OutputDebug("Current: " DebugDescribeTarget(curHwnd))
+        if (curHwnd <= 0) {
+            return curHwnd
+        }
+        curRect := this._GetCoords(curHwnd)
+        curArea := Geometry.GetArea(curRect)
+
+        winList := this._GetTargets()
+        if (winList.Length == 0)
+            return 0
+
+        curZ := 1
+        for z, winHwnd in winList {
+            if (winHwnd == curHwnd) {
+                curZ := z
+                break
+            }
+        }
+
+        loop (winList.Length - curZ) {
+            checkingHwnd := winList[curZ + A_Index]
+            checkingRect := this._GetCoords(checkingHwnd)
+
+            if (
+                (interArea := Geometry.GetIntersectionArea(curRect, checkingRect)) > 0
+                and Sqrt(interArea) / Sqrt(Geometry.GetArea(checkingRect) + curArea) > this._intersectionThreshold
+            )
+                return checkingHwnd
         }
         return 0
     }
