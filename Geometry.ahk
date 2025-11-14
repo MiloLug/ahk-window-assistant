@@ -5,39 +5,26 @@ class Geometry {
     /**
      * @description
      * ```
-     *      │         │
-     *     sXY1......sXY2
-     *      │         │
-     * dir  │     1---│----- r
-     *  │   │     │   │     │
-     *  ↓   │     │   │     │
-     *      │     ----│-----2
-     *      ↓         ↓
+     *   1---------r1
+     *   │         │
+     *   │     1---------r2
+     *   ------│---2     │
+     *         │         │
+     *         ----------2
      * ```
-     * Calculates the distance between the `s` plane and `r` rectangle.
+     * Calculate weighted intersection distance between two rectangles.
      * If they intersect, the distance is negative, otherwise - positive.
      * 
-     * S defined by:
-     *     points 1 (sX1, sY1) and 2 (sX2, sY2) for two boundaries
-     *         (s[1], s[2]) and (s[3], s[4]) so it can be defined by a rect
-     *     direction - vertical or horizontal
-     * 
-     * R defined by:
-     *     Top-Left point (rX1, rY1) and Bottom-Right point (rX2, rY2)
-     * 
-     * Returns the LENGTH of the intersection
-     * 
-     * @param {(Array)} s - Rect to define the plane
-     * @param {(Integer)} sDir - vertical or horizontal
-     *   - 0 - horizontal
-     *   - 1 - vertical
-     * @param {(Array)} r - Rect
+     * @param {(Array)} r1 - Rect
+     * @param {(Array)} r2 - Rect
+     * @param {(Float)} kx - Weight of distance on X
+     * @param {(Float)} ky - Weight of distance on Y
+     * @returns {(Float)} - The intersection distance
      */
-    static CalcIntersectionDistance(s, sDir, r) {
+    static CalcWeightedIntersectionDistance(r1, r2, kx, ky) {
         return (
-            sDir == 0
-                ? (r[2] < s[2] ? s[2] : r[2]) - (r[4] > s[4] ? s[4] : r[4])
-                : (r[1] < s[1] ? s[1] : r[1]) - (r[3] > s[3] ? s[3] : r[3])
+            ((r2[1] < r1[1] ? r1[1] : r2[1]) - (r2[3] > r1[3] ? r1[3] : r2[3])) * kx
+            + ((r2[2] < r1[2] ? r1[2] : r2[2]) - (r2[4] > r1[4] ? r1[4] : r2[4])) * ky
         )
     }
 
