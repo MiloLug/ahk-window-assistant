@@ -54,7 +54,7 @@ UseDesktopChangeAsMouseMove()
 !+0::MoveWindowToDesktop("A", -1)
 !+b::MoveWindowToDesktop("A", -1)
 
-!^C::SafeWinClose("A")
+!^C::SafeCloseCurrent()
 
 !P::desktopManager.ToggleWindowPin(windowManager.GetID("A"))
 !^P::PinAndSetOnTop("A")
@@ -68,7 +68,7 @@ UseDesktopChangeAsMouseMove()
 !h::GoToLeftWindow()
 !k::GoToTopWindow()
 !j::GoToBottomWindow()
-!i::GoToNextOverlappingWindow()
+!i::GoToNextOverlappedWindow()
 
 ; Navigate through all windows of the current app
 #Tab::windowManager.GetAppNavigator().Next()
