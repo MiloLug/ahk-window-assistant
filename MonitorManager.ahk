@@ -35,6 +35,16 @@ class ClsMonitorManager {
         this._monitorsOrdered := []
 
         this._UpdateMonitors()
+        this._UpdateMonitors_Bind := this._UpdateMonitors.Bind(this)
+        SetTimer(this._UpdateMonitors_Bind, 1000)
+        ObjRelease(ObjPtr(this))
+    }
+
+    __Delete() {
+        ObjAddRef(ObjPtr(this))
+        SetTimer(this._UpdateMonitors_Bind, 0)
+        this._UpdateMonitors_Bind := 0
+        this._ctx := 0
     }
 
     ToDebugString() {
@@ -67,28 +77,53 @@ class ClsMonitorManager {
         ArrSort(this._monitorsOrdered, rectComparator)
     }
 
+    /**
+     * @returns {(Number)} - 1-based index of the focused monitor
+     */
     GetFocused() {
         MouseGetPos(&x, &y)
         return this.GetByCoords(x, y).index
     }
 
+    /**
+     * @description Get the monitor that contains the given coordinates
+     * @param {(Number)} x - the x coordinate
+     * @param {(Number)} y - the y coordinate
+     * @returns {(ClsMonitor)} - the monitor that contains the given coordinates.
+     * 
+     * If no monitor is found, the primary monitor is returned.
+     */
     GetByCoords(x, y) {
         for monitor in this._monitorsOrdered {
             if (Geometry.PointInRect(x, y, monitor.rect)) {
                 return monitor
             }
         }
-        return 1
+        return this._monitors[MonitorGetPrimary()]
     }
 
+    /**
+     * @description Get the monitor by its index
+     * @param {(Number)} index - 1-based index of the monitor, compatible with ahk monitor indexing
+     * @returns {(ClsMonitor)}
+     */
     GetByIndex(index) {
         return this._monitors[index]
     }
 
+    /**
+     * @description Get all monitors
+     * @returns {(Array<ClsMonitor>)} - all monitors
+     */
     GetAll() {
         return this._monitorsOrdered
     }
 
+    /**
+     * @description Activate the monitor by its index
+     * @param {(Number)} index - 1-based index of the monitor, compatible with ahk monitor indexing
+     * @returns {(Boolean)} - true if the monitor was activated, false otherwise
+     */
     Activate(index) {
         if (index < 0 || index > this._monitors.Length) {
             return false
