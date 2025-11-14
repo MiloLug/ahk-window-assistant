@@ -95,21 +95,22 @@ class ClsSpatialWindowNavigator {
         return closest[2]
     }
 
-    _IsVisible(winRects, checkingZ, checkingRect) {
-        checkingArea := Geometry.GetArea(checkingRect)
-        for z, winRect in winRects {
-            if (z >= checkingZ)
-                break
+    ; TODO: Idk if this is a good idea at all
+    ; _IsVisible(winRects, checkingZ, checkingRect) {
+    ;     checkingArea := Geometry.GetArea(checkingRect)
+    ;     for z, winRect in winRects {
+    ;         if (z >= checkingZ)
+    ;             break
 
-            interArea := Geometry.GetIntersectionArea(checkingRect, winRect)
-            if (
-                interArea > 0
-                and Sqrt(interArea) / Sqrt(checkingArea + Geometry.GetArea(winRect)) > this._intersectionThreshold
-            )
-                return false
-        }
-        return true
-    }
+    ;         interArea := Geometry.GetIntersectionArea(checkingRect, winRect)
+    ;         if (
+    ;             interArea > 0
+    ;             and Sqrt(interArea) / Sqrt(checkingArea + Geometry.GetArea(winRect)) > this._intersectionThreshold
+    ;         )
+    ;             return false
+    ;     }
+    ;     return true
+    ; }
 
     /**
      * @description Get the closest window from a side
@@ -139,9 +140,10 @@ class ClsSpatialWindowNavigator {
                 for z, winHwnd in winList {
                     checkRect := this._GetCoords(winHwnd)
                     winRects.Push(checkRect)
-                    if (checkRect[3] <= curRect[1] and this._IsVisible(winRects, z, checkRect))
+                    if (checkRect[3] <= curRect[1]) ; and this._IsVisible(winRects, z, checkRect))
                         distances.Push([
-                            Geometry.CalcIntersectionDistance(curRect, 1, checkRect),
+                            ; Y distance is more important here - windows on the same row go first in ordering
+                            Geometry.CalcWeightedIntersectionDistance(curRect, checkRect, 1, 2),
                             winHwnd,
                             checkRect,
                             z
@@ -151,9 +153,9 @@ class ClsSpatialWindowNavigator {
                 for z, winHwnd in winList {
                     checkRect := this._GetCoords(winHwnd)
                     winRects.Push(checkRect)
-                    if (checkRect[1] >= curRect[3] and this._IsVisible(winRects, z, checkRect))
+                    if (checkRect[1] >= curRect[3]) ; and this._IsVisible(winRects, z, checkRect))
                         distances.Push([
-                            Geometry.CalcIntersectionDistance(curRect, 1, checkRect),
+                            Geometry.CalcWeightedIntersectionDistance(curRect, checkRect, 1, 2),
                             winHwnd,
                             checkRect,
                             z
@@ -163,9 +165,10 @@ class ClsSpatialWindowNavigator {
                 for z, winHwnd in winList {
                     checkRect := this._GetCoords(winHwnd)
                     winRects.Push(checkRect)
-                    if (checkRect[4] <= curRect[2] and this._IsVisible(winRects, z, checkRect))
+                    if (checkRect[4] <= curRect[2]) ; and this._IsVisible(winRects, z, checkRect))
                         distances.Push([
-                            Geometry.CalcIntersectionDistance(curRect, 0, checkRect),
+                            ; X distance is more important here - windows on the same column go first in ordering
+                            Geometry.CalcWeightedIntersectionDistance(curRect, checkRect, 2, 1),
                             winHwnd,
                             checkRect,
                             z
@@ -175,9 +178,9 @@ class ClsSpatialWindowNavigator {
                 for z, winHwnd in winList {
                     checkRect := this._GetCoords(winHwnd)
                     winRects.Push(checkRect)
-                    if (checkRect[2] >= curRect[4] and this._IsVisible(winRects, z, checkRect))
+                    if (checkRect[2] >= curRect[4]) ; and this._IsVisible(winRects, z, checkRect))
                         distances.Push([
-                            Geometry.CalcIntersectionDistance(curRect, 0, checkRect),
+                            Geometry.CalcWeightedIntersectionDistance(curRect, checkRect, 2, 1),
                             winHwnd,
                             checkRect,
                             z
