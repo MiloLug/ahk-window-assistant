@@ -115,7 +115,7 @@ class ClsWindowManager {
         try {
             id := WinGetID(ahkWindowTitle)
             if (
-                (not interactableOnly || this.IsInteractableWindow(id))
+                (!interactableOnly || this.IsInteractableWindow(id))
                 && (detectMinimized || WinGetMinMax(id) != WIN_MINIMIZED)
             )
                 return id
@@ -217,7 +217,7 @@ class ClsWindowManager {
                 this._lastDestroyTime := A_TickCount
                 this._eventManager.Trigger(EV_WINDOW_DESTROYED, mouseJustMoved)
             case HSHELL_RUDEAPPACTIVATED, HSHELL_WINDOWACTIVATED:
-                if (id != 0 && this._watchWindowFocusWithKB && not mouseJustMoved && A_TickCount - this._lastDestroyTime > 200) {
+                if (id != 0 && this._watchWindowFocusWithKB && !mouseJustMoved && A_TickCount - this._lastDestroyTime > 200) {
                     Sleep(10)
                     this._eventManager.Trigger(EV_WINDOW_FOCUSED_WITH_KB, id)
                 }

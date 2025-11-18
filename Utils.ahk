@@ -32,12 +32,12 @@ class TitleFilter {
     _SanitizeMap() {
         for prefix, titles in this._titlesMap {
             negated := SubStr(prefix, 1, 1) == "!"
-            if (this._matchAll && not negated) {
+            if (this._matchAll && !negated) {
                 titles.Clear()
             }
             opposite := negated ? prefix : "!" prefix
 
-            if (not negated) {
+            if (!negated) {
                 for title in titles {
                     if (this._titlesMap[opposite].Has(title)) {
                         titles.Delete(title)
@@ -149,7 +149,7 @@ class TitleFilter {
                 newFilter._titlesMap[prefix][title] := true
             }
         }
-        newFilter._matchAll := not removeWildcard && (this._matchAll || other._matchAll)
+        newFilter._matchAll := !removeWildcard && (this._matchAll || other._matchAll)
         newFilter._hasExclusions := this._hasExclusions || other._hasExclusions
         newFilter._SanitizeMap()
         return newFilter

@@ -64,7 +64,7 @@ class ClsMonitorManager {
             monitors.Push(monitor)
 
             if (!diff)
-                diff := not Geometry.RectsEqual(monitor.rect, this._monitors[A_Index])
+                diff := !Geometry.RectsEqual(monitor.rect, this._monitors[A_Index])
         }
 
         this._monitorsOrdered := []
