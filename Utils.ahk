@@ -32,7 +32,7 @@ class TitleFilter {
     _SanitizeMap() {
         for prefix, titles in this._titlesMap {
             negated := SubStr(prefix, 1, 1) == "!"
-            if (this._matchAll and not negated) {
+            if (this._matchAll && not negated) {
                 titles.Clear()
             }
             opposite := negated ? prefix : "!" prefix
@@ -89,7 +89,7 @@ class TitleFilter {
                 }
 
                 ; Special case: if the prefix is ahk_id or !ahk_id, just use hwnd
-                if (parsed[1] == "ahk_id" or parsed[1] == "!ahk_id") {
+                if (parsed[1] == "ahk_id" || parsed[1] == "!ahk_id") {
                     parsed[2] := Number(parsed[2])
                 }
 
@@ -112,10 +112,10 @@ class TitleFilter {
         winExe := ''
         winClass := ''
         try {
-            if this._hasExclusions and (
+            if this._hasExclusions && (
                 this._titlesMap["!ahk_exe"].Has(winExe := WinGetProcessName(hwnd))
-                or this._titlesMap["!ahk_class"].Has(winClass := WinGetClass(hwnd))
-                or this._titlesMap["!ahk_id"].Has(hwnd)
+                || this._titlesMap["!ahk_class"].Has(winClass := WinGetClass(hwnd))
+                || this._titlesMap["!ahk_id"].Has(hwnd)
             ) {
                 return false
             }
@@ -128,8 +128,8 @@ class TitleFilter {
         }
         return (
             this._titlesMap["ahk_exe"].Has(winExe)
-            or this._titlesMap["ahk_class"].Has(winClass)
-            or this._titlesMap["ahk_id"].Has(hwnd)
+            || this._titlesMap["ahk_class"].Has(winClass)
+            || this._titlesMap["ahk_id"].Has(hwnd)
         )
     }
 
@@ -149,8 +149,8 @@ class TitleFilter {
                 newFilter._titlesMap[prefix][title] := true
             }
         }
-        newFilter._matchAll := not removeWildcard and (this._matchAll or other._matchAll)
-        newFilter._hasExclusions := this._hasExclusions or other._hasExclusions
+        newFilter._matchAll := not removeWildcard && (this._matchAll || other._matchAll)
+        newFilter._hasExclusions := this._hasExclusions || other._hasExclusions
         newFilter._SanitizeMap()
         return newFilter
     }

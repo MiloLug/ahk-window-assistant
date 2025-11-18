@@ -69,11 +69,11 @@ class ClsSpatialWindowNavigator {
             ; Here we need all intersecting windows ABOVE the closest
             if (
                 checkingZ < closestZ
-                and (interArea := Geometry.GetIntersectionArea(closest[3], checking[3])) > 0
-                and Sqrt(interArea) / Sqrt(Geometry.GetArea(checking[3]) + closestArea) > this._intersectionThreshold
+                && (interArea := Geometry.GetIntersectionArea(closest[3], checking[3])) > 0
+                && Sqrt(interArea) / Sqrt(Geometry.GetArea(checking[3]) + closestArea) > this._intersectionThreshold
             ) {
                 ; Then if we have some window that is above that closest,
-                ; and it isn't being overlapped by something even higher...
+                ; && it isn't being overlapped by something even higher...
                 ; Then we can return it, since it should be the closest one while also being on top of all other windows.
                 ; Since even if there is something higher but further away, it isn't the target we want
                 if (prevChecking != 0) {
@@ -106,7 +106,7 @@ class ClsSpatialWindowNavigator {
     ;         interArea := Geometry.GetIntersectionArea(checkingRect, winRect)
     ;         if (
     ;             interArea > 0
-    ;             and Sqrt(interArea) / Sqrt(checkingArea + Geometry.GetArea(winRect)) > this._intersectionThreshold
+    ;             && Sqrt(interArea) / Sqrt(checkingArea + Geometry.GetArea(winRect)) > this._intersectionThreshold
     ;         )
     ;             return false
     ;     }
@@ -141,7 +141,7 @@ class ClsSpatialWindowNavigator {
                 for z, winHwnd in winList {
                     checkRect := this._GetCoords(winHwnd)
                     winRects.Push(checkRect)
-                    if (checkRect[3] <= curRect[1]) ; and this._IsVisible(winRects, z, checkRect))
+                    if (checkRect[3] <= curRect[1]) ; && this._IsVisible(winRects, z, checkRect))
                         distances.Push([
                             ; Y distance is more important here - windows on the same row go first in ordering
                             Geometry.CalcWeightedIntersectionDistance(curRect, checkRect, 1, 2),
@@ -154,7 +154,7 @@ class ClsSpatialWindowNavigator {
                 for z, winHwnd in winList {
                     checkRect := this._GetCoords(winHwnd)
                     winRects.Push(checkRect)
-                    if (checkRect[1] >= curRect[3]) ; and this._IsVisible(winRects, z, checkRect))
+                    if (checkRect[1] >= curRect[3]) ; && this._IsVisible(winRects, z, checkRect))
                         distances.Push([
                             Geometry.CalcWeightedIntersectionDistance(curRect, checkRect, 1, 2),
                             winHwnd,
@@ -166,7 +166,7 @@ class ClsSpatialWindowNavigator {
                 for z, winHwnd in winList {
                     checkRect := this._GetCoords(winHwnd)
                     winRects.Push(checkRect)
-                    if (checkRect[4] <= curRect[2]) ; and this._IsVisible(winRects, z, checkRect))
+                    if (checkRect[4] <= curRect[2]) ; && this._IsVisible(winRects, z, checkRect))
                         distances.Push([
                             ; X distance is more important here - windows on the same column go first in ordering
                             Geometry.CalcWeightedIntersectionDistance(curRect, checkRect, 2, 1),
@@ -179,7 +179,7 @@ class ClsSpatialWindowNavigator {
                 for z, winHwnd in winList {
                     checkRect := this._GetCoords(winHwnd)
                     winRects.Push(checkRect)
-                    if (checkRect[2] >= curRect[4]) ; and this._IsVisible(winRects, z, checkRect))
+                    if (checkRect[2] >= curRect[4]) ; && this._IsVisible(winRects, z, checkRect))
                         distances.Push([
                             Geometry.CalcWeightedIntersectionDistance(curRect, checkRect, 2, 1),
                             winHwnd,
@@ -230,7 +230,7 @@ class ClsSpatialWindowNavigator {
             checkRect := this._GetCoords(winHwnd)
             if (
                 winHwnd != curHwnd
-                and Geometry.DoRectanglesIntersect(curRect, checkRect)
+                && Geometry.DoRectanglesIntersect(curRect, checkRect)
             ) {
                 return winHwnd
             }
@@ -268,7 +268,7 @@ class ClsSpatialWindowNavigator {
 
             if (
                 (interArea := Geometry.GetIntersectionArea(curRect, checkingRect)) > 0
-                and Sqrt(interArea) / Sqrt(Geometry.GetArea(checkingRect) + curArea) > this._intersectionThreshold
+                && Sqrt(interArea) / Sqrt(Geometry.GetArea(checkingRect) + curArea) > this._intersectionThreshold
             )
                 return checkingHwnd
         }

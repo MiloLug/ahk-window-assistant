@@ -115,8 +115,8 @@ class ClsWindowManager {
         try {
             id := WinGetID(ahkWindowTitle)
             if (
-                (not interactableOnly or this.IsInteractableWindow(id))
-                and (detectMinimized or WinGetMinMax(id) != WIN_MINIMIZED)
+                (not interactableOnly || this.IsInteractableWindow(id))
+                && (detectMinimized || WinGetMinMax(id) != WIN_MINIMIZED)
             )
                 return id
         } finally {
@@ -146,7 +146,7 @@ class ClsWindowManager {
             for id in list {
                 if (
                     (this.IsInteractableWindow(id))
-                    and (detectMinimized or WinGetMinMax(id) != WIN_MINIMIZED)
+                    && (detectMinimized || WinGetMinMax(id) != WIN_MINIMIZED)
                 )
                     res.Push(id)
             }
@@ -217,7 +217,7 @@ class ClsWindowManager {
                 this._lastDestroyTime := A_TickCount
                 this._eventManager.Trigger(EV_WINDOW_DESTROYED, mouseJustMoved)
             case HSHELL_RUDEAPPACTIVATED, HSHELL_WINDOWACTIVATED:
-                if (id != 0 and this._watchWindowFocusWithKB and not mouseJustMoved and A_TickCount - this._lastDestroyTime > 200) {
+                if (id != 0 && this._watchWindowFocusWithKB && not mouseJustMoved && A_TickCount - this._lastDestroyTime > 200) {
                     Sleep(10)
                     this._eventManager.Trigger(EV_WINDOW_FOCUSED_WITH_KB, id)
                 }
@@ -280,7 +280,7 @@ class ClsWindowManager {
      *         shouldStop(title) => Boolean
      */
     StartMouseWindowFreeDrag(windowHwnd, shouldStop) {
-        if (!windowHwnd or (minMax := WinGetMinMax(windowHwnd)) == WIN_MINIMIZED)
+        if (!windowHwnd || (minMax := WinGetMinMax(windowHwnd)) == WIN_MINIMIZED)
             return
 
         MouseGetPos(&mouseXStart, &mouseYStart)
@@ -313,7 +313,7 @@ class ClsWindowManager {
             MouseGetPos(&mouseXOffset, &mouseYOffset)
             mouseXOffset -= mouseXStart
             mouseYOffset -= mouseYStart
-            if (mouseXOffset == 0 and mouseYOffset == 0)
+            if (mouseXOffset == 0 && mouseYOffset == 0)
                 continue
 
             WinMove(windowX + mouseXOffset, windowY + mouseYOffset,,, windowHwnd)
@@ -334,7 +334,7 @@ class ClsWindowManager {
      *         shouldStop(title) => Boolean
      */
     StartMouseWindowFreeResize(windowHwnd, shouldStop) {
-        if (!windowHwnd or WinGetMinMax(windowHwnd) != WIN_RESTORED)
+        if (!windowHwnd || WinGetMinMax(windowHwnd) != WIN_RESTORED)
             return
         MouseGetPos(&mouseXStart, &mouseYStart)
         WinGetPos(&windowX, &windowY, &windowW, &windowH, windowHwnd)
@@ -354,7 +354,7 @@ class ClsWindowManager {
             MouseGetPos(&mouseXOffset, &mouseYOffset)
             mouseXOffset -= mouseXStart
             mouseYOffset -= mouseYStart
-            if (mouseXOffset == 0 and mouseYOffset == 0)
+            if (mouseXOffset == 0 && mouseYOffset == 0)
                 continue
 
             WinMove(
@@ -381,7 +381,7 @@ class ClsWindowManager {
 
         windowHeaderSize := Config.WINDOW_HEADER_SIZE
 
-        if (this._freeDraggingWindowHwnd == windowHwnd or this._freeResizingWindowHwnd == windowHwnd)
+        if (this._freeDraggingWindowHwnd == windowHwnd || this._freeResizingWindowHwnd == windowHwnd)
             return true
 
         if (!GetKeyState("LButton"))
@@ -396,11 +396,11 @@ class ClsWindowManager {
         } catch {
             return false
         }
-        if (res == HTCAPTION or res == HTBORDER)
+        if (res == HTCAPTION || res == HTBORDER)
             return true
 
         WinGetPos(&windowX, &windowY, &windowW, &windowH, windowHwnd)
-        if ((x > windowX and x < windowX + windowW) and (y > windowY and y < windowY + windowHeaderSize))
+        if ((x > windowX && x < windowX + windowW) && (y > windowY && y < windowY + windowHeaderSize))
             return true
     }
 
@@ -445,7 +445,7 @@ class ClsWindowManager {
 
         if (state.Leave()) {
             ; If the user sets the window to top, we should leave it as is
-            if (!state.original and !state.external)
+            if (!state.original && !state.external)
                 WinSetAlwaysOnTop(0, windowHwnd)
             this._topmostWindowsInvocations.Delete(windowHwnd)
         }
@@ -466,7 +466,7 @@ class ClsWindowManager {
         if (!windowHwnd)
             return
         invocation := this._topmostWindowsInvocations.Get(windowHwnd, 0)
-        if (invocation != 0 and force) {
+        if (invocation != 0 && force) {
             invocation.external := true
         }
         WinSetAlwaysOnTop(state, windowHwnd)
@@ -502,8 +502,8 @@ class ClsWindowManager {
         if (invocation.Leave()) {
             if (
                 invocation.original != WIN_RESTORED
-                and !invocation.external
-                and WinGetMinMax(windowHwnd) == WIN_RESTORED
+                && !invocation.external
+                && WinGetMinMax(windowHwnd) == WIN_RESTORED
             )
                 this.SetMinMax(windowHwnd, invocation.original)
             this._maximizedWindowsInvocations.Delete(windowHwnd)
@@ -523,7 +523,7 @@ class ClsWindowManager {
      */
     SetMinMax(windowHwnd, state, force := true) {
         invocation := this._maximizedWindowsInvocations.Get(windowHwnd, 0)
-        if (invocation != 0 and force) {
+        if (invocation != 0 && force) {
             invocation.external := true
         }
         switch state {

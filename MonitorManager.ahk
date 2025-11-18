@@ -57,14 +57,17 @@ class ClsMonitorManager {
 
     _UpdateMonitors() {
         count := MonitorGetCount()
-        this._monitors := []
-        this._monitorsOrdered := []
+        monitors := []
+        diff := count != this._monitors.Length
         loop count {
             monitor := ClsMonitor.FromIndex(A_Index)
-            this._monitors.Push(monitor)
-            this._monitorsOrdered.Push(monitor)
+            monitors.Push(monitor)
+
+            if (!diff)
+                diff := not Geometry.RectsEqual(monitor.rect, this._monitors[A_Index])
         }
 
+        this._monitorsOrdered := []
         static rectComparator(a, b) {
             ; Sort left-top to right-bottom
             yDiff := a.rect[2] - b.rect[2]
@@ -130,7 +133,7 @@ class ClsMonitorManager {
         }
         monitor := this._monitors[index]
         Geometry.RectCenter(monitor.rect, &x, &y)
-        WinActivate('ahk_class Progman')
+        WinActivate('ahk_class Progman')  ; To unfocus everything
         MouseMove(x, y)
         return true
     }

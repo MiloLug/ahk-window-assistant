@@ -32,7 +32,7 @@ GoToDesktop(n, restoreMousePosition:=true) {
 
     try {
         activeHwnd := windowManager.GetID("A")
-        if (activeHwnd and windowManager.IsDraggingWindow(activeHwnd)) {
+        if (activeHwnd && windowManager.IsDraggingWindow(activeHwnd)) {
             desktopManager.MoveWindowToDesktop(activeHwnd, n)
             restoreMousePosition := false
         }
