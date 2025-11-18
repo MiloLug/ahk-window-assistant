@@ -22,7 +22,7 @@ class Config {
      * Navigation sequence timeout in milliseconds
      * How long to wait before finalizing Alt-Tab-like navigation
      */
-    static NAVIGATION_DELAY := 500
+    static NAVIGATION_DELAY := 250
     
     /**
      * Approximate window header/title bar size in pixels

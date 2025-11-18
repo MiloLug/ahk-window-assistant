@@ -4,19 +4,10 @@
 #include ../Utils.ahk
 
 
-/**
- * @description A class to navigate through a collection of windows with Alt-Tab-like behavior
- * @param {(WindowManager)} windowManager - the window manager to use
- * @param {(String)} listSelector - the selector to use to get the list of windows
- * @param {(String)} currentSelector - the selector to use to get the current window
- */
-class ClsSequenceWindowNavigator {
-    __New(ctx, listSelector:='', currentSelector:='A') {
-        this._ctx := ctx
-        this._windows := []
-        this._windowsMap := Map()
-        this._listSelector := listSelector
-        this._currentSelector := currentSelector
+class ClsBaseSequenceTimedNavigator {
+    __New() {
+        this._hwnds := []
+        this._hwndsMap := Map()
 
         this._EndNavigation_Bind := this._EndNavigation.Bind(this)
         this._currentN := 1
@@ -36,72 +27,81 @@ class ClsSequenceWindowNavigator {
      * @description Update the current window
      * Should be called before updating the list for optimal performance
      */
-    _UpdateCurrentWindow() {
-        currentHwnd := WinGetID(this._currentSelector)
-        if (this._windowsMap.Has(currentHwnd)) {
+    _UpdateCurrentHwnd(currentHwnd) {
+        if (this._hwndsMap.Has(currentHwnd)) {
             ; Since it's already in the list, we can just move it to the front
-            if (this._windows[1] != currentHwnd) {
-                for i, hwnd in this._windows {
+            if (this._hwnds[1] != currentHwnd) {
+                for i, hwnd in this._hwnds {
                     if (hwnd == currentHwnd) {
-                        this._windows.RemoveAt(i)
-                        this._windows.InsertAt(1, hwnd)
+                        this._hwnds.RemoveAt(i)
+                        this._hwnds.InsertAt(1, hwnd)
                         break
                     }
                 }
             }
         } else {
-            this._windows.InsertAt(1, currentHwnd)
-            this._windowsMap[currentHwnd] := true
+            this._hwnds.InsertAt(1, currentHwnd)
+            this._hwndsMap[currentHwnd] := true
         }
     }
 
     /**
-     * @description Update the list of windows
-     * Updates the list in a natural way, so the order of the windows is preserved as much as possible.
+     * @description Update the list of hwnds
+     * Updates the list in a natural way, so the order of the hwnds is preserved as much as possible.
      */
-    _UpdateWindowsList() {
+    _ApplyExternalHwnds(externalHwnds) {
         newMap := Map()
-        newWindows := this._ctx.windowManager.GetList(this._listSelector, true)
-        if (newWindows.Length == 0) {
-            this._windows := []
-            this._windowsMap.Clear()
+        if (externalHwnds.Length == 0) {
+            this._hwnds := []
+            this._hwndsMap.Clear()
             return
         }
         ; if we have at least one window, consider it 'current' and don't move it around
-        ; this way, if it's 0, we'll insert new windows at the beginning, otherwise at index = 2
-        hasCurrent := this._windows.Length > 0
+        ; this way, if it's 0, we'll insert new hwnds at the beginning, otherwise at index = 2
+        hasCurrent := this._hwnds.Length > 0
 
-        ; Add new windows
+        ; Add new hwnds
         toAdd := []
-        for windowHwnd in newWindows {
+        for windowHwnd in externalHwnds {
             newMap[windowHwnd] := true
-            if (!this._windowsMap.Has(windowHwnd)) {
+            if (!this._hwndsMap.Has(windowHwnd)) {
                 toAdd.Push(windowHwnd)
             }
         }
         if (toAdd.Length > 0) {
             ; 1st being the current window, so we will navigate to
-            ; the new windows next
-            this._windows.InsertAt(1 + hasCurrent, toAdd*)
+            ; the new hwnds next
+            this._hwnds.InsertAt(1 + hasCurrent, toAdd*)
         }
 
-        ; Remove old windows
-        i := this._windows.Length
-        ; skip since we already know new windows exist
+        ; Remove old hwnds
+        i := this._hwnds.Length
+        ; skip since we already know new hwnds exist
         lastNewI := toAdd.Length + hasCurrent
         while (i > lastNewI) {
-            if (!newMap.Has(this._windows[i])) {
-                this._windows.RemoveAt(i)
+            if (!newMap.Has(this._hwnds[i])) {
+                this._hwnds.RemoveAt(i)
             }
             i--
         }
-        this._windowsMap := newMap
+        this._hwndsMap := newMap
     }
 
     _GetSelected() {
-        if (this._windows.Length == 0)
+        if (this._hwnds.Length == 0)
             return 0
-        return this._windows[Mod(this._currentN - 1, this._windows.Length) + 1]
+        return this._hwnds[Mod(this._currentN - 1, this._hwnds.Length) + 1]
+    }
+
+    /**
+     * @description Override this to update the hwnds list state with your values.
+     * For example:
+     * 
+     *     self._UpdateCurrentHwnd(windowManager.GetID('A'))
+     *     self._ApplyExternalHwnds(windowManager.GetList())
+     * 
+     */
+    _UpdateHwnds() {
     }
 
     /**
@@ -111,10 +111,8 @@ class ClsSequenceWindowNavigator {
     Next(instant:=true) {
         SetTimer(this._EndNavigation_Bind, 0)
         if (this._currentN == 1) {
-            this._UpdateCurrentWindow()
-            this._UpdateWindowsList()
-
-            if (this._windows.Length == 0) {
+            this._UpdateHwnds()
+            if (this._hwnds.Length == 0) {
                 return
             }
         }
@@ -138,5 +136,26 @@ class ClsSequenceWindowNavigator {
                 WinActivate(selectedHwnd)
         }
         this._currentN := 1
+    }
+}
+
+
+/**
+ * @description A class to navigate through a collection of hwnds with Alt-Tab-like behavior
+ * @param {(WindowManager)} windowManager - the window manager to use
+ * @param {(String)} listSelector - the selector to use to get the list of hwnds
+ * @param {(String)} currentSelector - the selector to use to get the current window
+ */
+class ClsSequenceWindowNavigator extends ClsBaseSequenceTimedNavigator {
+    __New(ctx, listSelector:='', currentSelector:='A') {
+        super.__New()
+        this._ctx := ctx
+        this._listSelector := listSelector
+        this._currentSelector := currentSelector
+    }
+
+    _UpdateHwnds() {
+        this._UpdateCurrentHwnd(WinGetID(this._currentSelector))
+        this._ApplyExternalHwnds(this._ctx.windowManager.GetList(this._listSelector, true))
     }
 }
