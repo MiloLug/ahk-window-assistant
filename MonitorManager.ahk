@@ -58,16 +58,19 @@ class ClsMonitorManager {
     _UpdateMonitors() {
         count := MonitorGetCount()
         monitors := []
-        diff := count != this._monitors.Length
+        noUpdates := count == this._monitors.Length
+
         loop count {
             monitor := ClsMonitor.FromIndex(A_Index)
             monitors.Push(monitor)
 
-            if (!diff)
-                diff := !Geometry.RectsEqual(monitor.rect, this._monitors[A_Index])
+            if (noUpdates)
+                noUpdates := Geometry.RectsEqual(monitor.rect, this._monitors[A_Index].rect)
         }
+        if (noUpdates)
+            return
 
-        this._monitorsOrdered := []
+        monitorsOrdered := monitors.Clone()
         static rectComparator(a, b) {
             ; Sort left-top to right-bottom
             yDiff := a.rect[2] - b.rect[2]
@@ -76,8 +79,10 @@ class ClsMonitorManager {
             }
             return a.rect[1] - b.rect[1]
         }
+        ArrSort(monitorsOrdered, rectComparator)
 
-        ArrSort(this._monitorsOrdered, rectComparator)
+        this._monitors := monitors
+        this._monitorsOrdered := monitorsOrdered
     }
 
     /**
