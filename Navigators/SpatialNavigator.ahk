@@ -27,7 +27,6 @@ class ClsSpatialWindowNavigator {
             hwnd := this._ctx.windowManager.GetID(this._currentSelector,,, false)
             if (hwnd)
                 return hwnd
-        } catch {
         }
         return -this._ctx.monitorManager.GetFocused()
     }
@@ -212,14 +211,16 @@ class ClsSpatialWindowNavigator {
     }
 
     /**
-     * @description Find the next overlapping window in Z-order
+     * @description Find the bottom-most window, overlapped by the current one
      */
     NextOverlapped() {
-        try {
-            curHwnd := this._ctx.windowManager.GetID(this._currentSelector)
-        } catch {
-            return 0
-        }
+        ; TODO: I suspect this method could be done better...
+        ; maybe something like the tab navigator
+        ; actually, tab navcould be derived from a more general stack navigator
+        ; but maybe I could even this with the native stacking arrangement
+        if ((curHwnd := this._GetCurrent()) <= 0)
+            return curHwnd
+
         curRect := this._GetCoords(curHwnd)
 
         winList := this._ctx.windowManager.GetList(this._listSelector)
@@ -239,14 +240,12 @@ class ClsSpatialWindowNavigator {
     }
 
     /**
-     * @description Find the closest window, overlapped by the current window
+     * @description Find the closest window or monitor, overlapped by the current window
      */
     ClosestOverlapped() {
-        curHwnd := this._GetCurrent()
-        OutputDebug("Current: " DebugDescribeTarget(curHwnd))
-        if (curHwnd <= 0) {
+        if ((curHwnd := this._GetCurrent()) <= 0)
             return curHwnd
-        }
+
         curRect := this._GetCoords(curHwnd)
         curArea := Geometry.GetArea(curRect)
 

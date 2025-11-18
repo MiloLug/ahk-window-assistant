@@ -36,7 +36,6 @@ GoToDesktop(n, restoreMousePosition:=true) {
             desktopManager.MoveWindowToDesktop(activeHwnd, n)
             restoreMousePosition := false
         }
-    } catch {
     }
     desktopManager.GoToDesktop(n, restoreMousePosition, restoreMousePosition)
 }
