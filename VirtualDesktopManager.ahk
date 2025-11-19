@@ -299,7 +299,7 @@ class ClsVirtualDesktopManager {
      */
     RestoreMousePosition(num) {
         num++
-        if (num <= this._mousePositions.Length and this._mousePositions[num] != 0) {
+        if (num <= this._mousePositions.Length && this._mousePositions[num] != 0) {
             DllCall("SetCursorPos", "Int", this._mousePositions[num][1], "Int", this._mousePositions[num][2])
             this._hasRestoredMousePosition := true
         }
@@ -313,7 +313,7 @@ class ClsVirtualDesktopManager {
      * - `true` Restore mouse position on the target desktop
      */
     GoToDesktop(num, rememberMousePosition:=true, restoreMousePosition:=true) {
-        if (num == this._currentDesktop or num < 0)
+        if (num == this._currentDesktop || num < 0)
             return
 
         if (rememberMousePosition)

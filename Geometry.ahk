@@ -36,7 +36,7 @@ class Geometry {
      */
     static DoRectanglesIntersect(r1, r2) {
         return (
-            r1[1] < r2[3] and r1[3] > r2[1] and r1[2] < r2[4] and r1[4] > r2[2]
+            r1[1] < r2[3] && r1[3] > r2[1] && r1[2] < r2[4] && r1[4] > r2[2]
         )
     }
 
@@ -68,12 +68,21 @@ class Geometry {
         return [x1, y1, x2, y2]
     }
 
+    static RectsEqual(r1, r2) {
+        return (
+            r1[1] == r2[1]
+            && r1[2] == r2[2]
+            && r1[3] == r2[3]
+            && r1[4] == r2[4]
+        )
+    }
+
     static GetArea(r) {
         return (r[3] - r[1]) * (r[4] - r[2])
     }
 
     static PointInRect(x, y, r) {
-        return x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
+        return x >= r[1] && x <= r[3] && y >= r[2] && y <= r[4]
     }
 
     static RectCenter(r, &x, &y) {

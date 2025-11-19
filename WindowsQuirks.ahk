@@ -13,7 +13,7 @@ UseFixMouseOnKBWindowFocus(focusTitles:=0) {
     MouseFollowFocus(newHwnd) {
         if (
             !windowManager.IsInteractableWindow(newHwnd)
-            or (focusTitles and not focusTitles.TestWindow(newHwnd))
+            || (focusTitles && !focusTitles.TestWindow(newHwnd))
         )
             return
 
@@ -28,7 +28,7 @@ UseFixMouseOnKBWindowFocus(focusTitles:=0) {
 }
 
 /**
- * @description Fix flashing and new window focus (for example, the consent window for UAC)
+ * @description Fix flashing && new window focus (for example, the consent window for UAC)
  * @param {(TitleFilter)} focusTitles - titles of windows to focus
  * @param {(Boolean)} dontStealMouse - if true, don't focus when mouse is moving/was just moved
  */
@@ -37,9 +37,9 @@ UseFlashFocusWindows(focusTitles:=0, dontStealMouse:=true) {
     eventManager.On(EV_NEW_WINDOW, FocusNewWindow)
     FocusNewWindow(hwnd, mouseJustMoved) {
         if (
-            (mouseJustMoved and dontStealMouse)
-            or !windowManager.IsInteractableWindow(hwnd)
-            or (focusTitles and not focusTitles.TestWindow(hwnd))
+            (mouseJustMoved && dontStealMouse)
+            || !windowManager.IsInteractableWindow(hwnd)
+            || (focusTitles && !focusTitles.TestWindow(hwnd))
         )
             return
 

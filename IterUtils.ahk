@@ -39,7 +39,7 @@ IterMap(iterable, func) {
     it := Iter(iterable)
     return (&item) => (
         res := it(&item),
-        res and (item := func(item)),  ; Apply func to item, not res
+        res && (item := func(item)),  ; Apply func to item, not res
         res
     )
 }
@@ -118,9 +118,9 @@ ArrSort(arr, comparator := (a, b) => a - b) {
         i := l
         j := r - 1
         while (i < j) {
-            while (i < r and comp(arr[i], pivot) <= 0)
+            while (i < r && comp(arr[i], pivot) <= 0)
                 i++
-            while (j > l and comp(arr[j], pivot) >= 0)
+            while (j > l && comp(arr[j], pivot) >= 0)
                 j--
 
             if (i >= j)
