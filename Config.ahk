@@ -14,7 +14,7 @@ class Config {
 
     /**
      * Mouse movement detection timeout in milliseconds
-     * Used to determine if user recently moved mouse manually
+     * Used to determine if the user recently moved mouse manually
      */
     static MOUSE_MOVE_TIMEOUT := 500
     

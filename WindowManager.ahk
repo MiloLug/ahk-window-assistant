@@ -591,3 +591,14 @@ class ClsWindowManager {
         }
     }
 }
+
+
+/**
+ * @description A class to manage windows
+ * @param {(Context)} ctx - the context to use
+ * @returns {(ClsWindowManagerACTUAL)} - the window manager
+ */
+class ClsWindowManagerACTUAL {
+    __New(ctx) {
+    }
+}

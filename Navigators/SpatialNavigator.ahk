@@ -216,8 +216,8 @@ class ClsSpatialWindowNavigator {
     NextOverlapped() {
         ; TODO: I suspect this method could be done better...
         ; maybe something like the tab navigator
-        ; actually, tab navcould be derived from a more general stack navigator
-        ; but maybe I could even this with the native stacking arrangement
+        ; actually, tab nav could be derived from a more general stack navigator
+        ; but maybe I could even do this with the native stacking arrangement
         if ((curHwnd := this._GetCurrent()) <= 0)
             return curHwnd
 

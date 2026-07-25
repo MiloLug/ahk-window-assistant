@@ -2,13 +2,31 @@
 
 MSG_VIRTUAL_DESKTOP_MENAGER := 0x1400 + 30
 
+; (prevDesktop: Integer, newDesktop: Integer, restoredMouse: Boolean) => void
 EV_VIRTUAL_DESKTOP_CHANGED := 1
+; (hwnd: Integer, mouseJustMoved: Boolean) => void
 EV_NEW_WINDOW := 2
+; (hwnd: Integer) => void
 EV_WINDOW_FOCUSED_WITH_KB := 3
+; (
+;    xOffset: Integer,
+;    yOffset: Integer,
+;    additional: {
+;       flags: Integer,
+;       buttonFlags: Integer,
+;       buttonData: Integer,
+;       device: Integer
+;    }
+; ) => void
 EV_MOUSE_MOVED := 4
+; (message: Integer, id: Integer) => void
 EV_SHELLHOOK := 5
+; (hwnd: Integer, mouseJustMoved: Boolean) => void
 EV_WINDOW_FLASH := 6
+; (mouseJustMoved: Boolean) => void
 EV_WINDOW_DESTROYED := 7
+; () => void
+EV_MONITORS_LAYOUT_CHANGED := 8
 
 ; WinGetMinMax values
 WIN_MAXIMIZED := 1

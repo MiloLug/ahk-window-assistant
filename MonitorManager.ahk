@@ -2,6 +2,7 @@
 
 #include IterUtils.ahk
 #include Geometry.ahk
+#include Constants.ahk
 
 
 class ClsMonitor {
@@ -23,6 +24,14 @@ class ClsMonitor {
 }
 
 
+/**
+ * @description A class to manage the monitors
+ * 
+ * It keeps track of current monitors and their positions
+ * 
+ * @param {(Context)} ctx - the context to use
+ * @returns {(ClsMonitorManager)} - the monitor manager
+ */
 class ClsMonitorManager {
     __New(ctx) {
         this._ctx := ctx
@@ -83,6 +92,8 @@ class ClsMonitorManager {
 
         this._monitors := monitors
         this._monitorsOrdered := monitorsOrdered
+
+        this._ctx.eventManager.Trigger(EV_MONITORS_LAYOUT_CHANGED)
     }
 
     /**

@@ -1,7 +1,8 @@
 #Requires AutoHotkey v2.0
 
+#include Constants.ahk
 
-; TODO: Maybe... I don't really need to complicate things to this extent???
+
 class ClsEventBus {
     __New(ctx) {
         this._ctx := ctx
@@ -26,6 +27,15 @@ class ClsEventBus {
         this.__rawInputWatcher := ClsMouseRawInputHook(this.Trigger.Bind(this, EV_MOUSE_MOVED), 1)
     }
 
+    /**
+     * @description Add a handler for an event
+     * @param {(Integer)} eventId - the event id
+     * @param {(FuncObj)} handler - the handler to call when the event is triggered
+     * 
+     *         handler(args*) => Any
+     * 
+     * @param {(Boolean)} once - whether the handler should be called only once
+     */
     On(eventId, handler, once := false) {
         if (!this._events.Has(eventId)) {
             this._events[eventId] := Map()
@@ -41,6 +51,16 @@ class ClsEventBus {
         }
     }
 
+    /**
+     * @description Add a lazy registrator for an event
+     * 
+     * This is used to initialize some infrastructure that the event needs, when it's first "listened" to.
+     * For example, to setup a mouse input hook.
+     * This improves the startup time, memory usage etc, since we don't need to do any listening unless it's needed. 
+     * 
+     * @param {(Integer)} eventId - the event id
+     * @param {(FuncObj)} handler - the handler to call when the event is triggered
+     */
     AddLazyRegistrator(eventId, handler) {
         if (!this._lazyRegistrators.Has(eventId)) {
             this._lazyRegistrators[eventId] := Map()
@@ -48,12 +68,22 @@ class ClsEventBus {
         this._lazyRegistrators[eventId][handler] := 1
     }
 
+    /**
+     * @description Remove a lazy registrator for an event
+     * @param {(Integer)} eventId - the event id
+     * @param {(FuncObj)} handler - the handler to remove
+     */
     RemoveLazyRegistrator(eventId, handler) {
         if (this._lazyRegistrators.Has(eventId)) {
             this._lazyRegistrators[eventId].Delete(handler)
         }
     }
 
+    /**
+     * @description Trigger an event
+     * @param {(Integer)} eventId - the event id
+     * @param {(Any)} args* - the arguments to pass to the handlers
+     */
     Trigger(eventId, args*) {
         if (this._events.Has(eventId)) {
             toDelete := []
@@ -69,6 +99,11 @@ class ClsEventBus {
         }
     }
 
+    /**
+     * @description Remove a handler for an event
+     * @param {(Integer)} eventId - the event id
+     * @param {(FuncObj)} handler - the handler to remove
+     */
     Off(eventId, handler) {
         if (this._events.Has(eventId)) {
             this._events[eventId].Delete(handler)
