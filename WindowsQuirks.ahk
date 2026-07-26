@@ -18,7 +18,7 @@ UseFixMouseOnKBWindowFocus(focusTitles:=0) {
             return
 
         try {
-            WinActivate(newHwnd)
+            windowManager.ActivateWindow(newHwnd)
             MoveMouseToWindow(newHwnd)
             OutputDebug("Focused on KB: " DebugDescribeTarget(newHwnd))
         } catch {
@@ -44,15 +44,11 @@ UseFlashFocusWindows(focusTitles:=0, dontStealMouse:=true) {
             return
 
         try {
-            WinActivate(hwnd)
+            windowManager.ActivateWindow(hwnd)
             MoveMouseToWindow(hwnd)
             OutputDebug("Focused new: " DebugDescribeTarget(hwnd))
         } catch {
             OutputDebug("Failed to focus new: " DebugDescribeTarget(hwnd))
         }
     }
-}
-
-UseDesktopChangeAsMouseMove() {
-    windowManager.SetConsiderDesktopChangeAsMove(true)
 }

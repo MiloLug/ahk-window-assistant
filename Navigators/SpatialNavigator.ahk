@@ -33,7 +33,7 @@ class ClsSpatialWindowNavigator {
 
     _GetCoords(hwnd) {
         if (hwnd < 0) {
-            return this._ctx.monitorManager.GetByIndex(-hwnd).rect
+            return this._ctx.monitorManager.GetByIndex(-hwnd).workRect
         } else {
             WinCalls.WinGetPosEx(hwnd, &l, &t,,, &r, &b)
             return Geometry.Rect(l, t, r, b)

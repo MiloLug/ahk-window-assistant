@@ -42,5 +42,37 @@ class Config {
      * withing this threshold in pixels, while sorting them 'naturally'
      */
     static MONITOR_SAME_LEVEL_THRESHOLD := 400
+
+    /**
+     * Delay in ms between a monitor-change hint (WM_DISPLAYCHANGE / work-area
+     * WM_SETTINGCHANGE) and re-reading the monitor list. Mode switches emit hints
+     * in bursts while displays settle down
+     */
+    static MONITOR_SETTLE_DELAY := 400
+
+    /**
+     * Poll interval in ms for monitor layout. Broadcasts can be missed
+     * sometimes, so better leave this be
+     */
+    static MONITOR_POLL_INTERVAL := 10000
+
+    /**
+     * Delay in ms between a foreground-change hint (WinEvent/shell hook) and reading
+     * GetForegroundWindow. Hooks fire mid-transition: the hwnd may be 0, cloaked or
+     * transient, so wait for the OS to settle before reading the state
+     */
+    static FOREGROUND_SETTLE_DELAY := 50
+
+    /**
+     * Poll interval in ms for foreground changes. The hooks sometimes miss transitions.
+     * This value is the worst-case detection latency
+     */
+    static FOREGROUND_POLL_INTERVAL := 250
+
+    /**
+     * Window in ms during which a foreground change to an Expect()-ed hwnd is committed
+     * without an event
+     */
+    static FOREGROUND_EXPECT_TIMEOUT := 500
 }
 

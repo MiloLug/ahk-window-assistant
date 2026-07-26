@@ -18,16 +18,15 @@ MoveWindowToDesktop(ahkWindowTitle, number) {
     hwnd := windowManager.GetID(ahkWindowTitle)
     if (!hwnd)
         return
-    if (number == -1) {
+    if (number == -1)
         number := desktopManager.GetPreviousDesktopNum()
-    }
     desktopManager.MoveWindowToDesktop(hwnd, number)
 }
 
 GoToDesktop(n, restoreMousePosition:=true) {
-    if (n == -1) {
+    if (n == -1)
         n := desktopManager.GetPreviousDesktopNum()
-    }
+
     desktopManager.FillDesktops(n)
 
     try {
