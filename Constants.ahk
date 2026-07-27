@@ -2,13 +2,33 @@
 
 MSG_VIRTUAL_DESKTOP_MENAGER := 0x1400 + 30
 
+; (prevDesktop: Integer, newDesktop: Integer, restoredMouse: Boolean) => void
 EV_VIRTUAL_DESKTOP_CHANGED := 1
+; (hwnd: Integer, mouseJustMoved: Boolean) => void
 EV_NEW_WINDOW := 2
+; (hwnd: Integer) => void
 EV_WINDOW_FOCUSED_WITH_KB := 3
+; (
+;    xOffset: Integer,
+;    yOffset: Integer,
+;    additional: {
+;       flags: Integer,
+;       buttonFlags: Integer,
+;       buttonData: Integer,
+;       device: Integer
+;    }
+; ) => void
 EV_MOUSE_MOVED := 4
+; (message: Integer, id: Integer) => void
 EV_SHELLHOOK := 5
+; (hwnd: Integer, mouseJustMoved: Boolean) => void
 EV_WINDOW_FLASH := 6
+; (mouseJustMoved: Boolean) => void
 EV_WINDOW_DESTROYED := 7
+; () => void
+EV_MONITORS_LAYOUT_CHANGED := 8
+; (newHwnd: Integer, prevHwnd: Integer, mouseJustMoved: Boolean) => void
+EV_FOREGROUND_CHANGED := 9
 
 ; WinGetMinMax values
 WIN_MAXIMIZED := 1
@@ -23,6 +43,11 @@ HSHELL_WINDOWACTIVATED := 4
 HSHELL_RUDEAPPACTIVATED := 32772
 HSHELL_FLASH := 0x8006
 
+; SetWinEventHook values
+EVENT_SYSTEM_FOREGROUND := 0x0003
+WINEVENT_OUTOFCONTEXT := 0x0000
+WINEVENT_SKIPOWNPROCESS := 0x0002
+
 ; ChangeWindowMessageFilterEx values
 MSGFLT_ALLOW := 1
 MSGFLT_DISALLOW := 2
@@ -31,6 +56,9 @@ MSGFLT_RESET := 0
 ; ChangeWindowMessageFilter values
 MSGFLT_ADD := 1
 MSGFLT_REMOVE := 2
+
+; SystemParametersInfo action id, arrives as WM_SETTINGCHANGE wParam on work-area change
+SPI_SETWORKAREA := 0x002F
 
 ; Styles
 WS_EX_TOPMOST := 0x00000008
@@ -304,3 +332,4 @@ WM_APP := 0x8000
 
 ; DWMWA values
 DWMWA_EXTENDED_FRAME_BOUNDS := 9
+DWMWA_CLOAKED := 14

@@ -66,7 +66,7 @@ class TitleFilter {
             return
         }
 
-        ; Init map with all prefixes to avoid checking the keys later (performance)
+        ; Init map with all prefixes to avoid checking the keys later
         for prefix in TitleFilter._allPrefixes {
             this._titlesMap[prefix] := Map()
         }

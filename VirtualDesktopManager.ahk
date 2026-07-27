@@ -31,9 +31,8 @@ class ClsVirtualDesktopManager {
         
         try {
             this._hVD := DllCall("LoadLibrary", "Str", dllPath, "Ptr")
-            if (!this._hVD) {
+            if (!this._hVD)
                 throw Error("LoadLibrary returned null")
-            }
         } catch as err {
             MsgBox(
                 "ERROR: Failed to load VirtualDesktopAccessor.dll`n`n"
@@ -101,61 +100,53 @@ class ClsVirtualDesktopManager {
 
     GetCount() {
         res := DllCall(this._hProcGetDesktopCount, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to get desktop count")
-        }
         return res
     }
 
     GetWindowDesktopNum(windowHwnd) {
         res := DllCall(this._hProcGetWindowDesktopNumber, "Ptr", windowHwnd, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to get window desktop number")
-        }
         return res
     }
 
     IsWindowOnCurrentDesktop(windowHwnd) {
         res := DllCall(this._hProcIsWindowOnCurrentVirtualDesktop, "Ptr", windowHwnd, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to check if window is on current desktop")
-        }
         return res
     }
 
     IsWindowOnDesktop(windowHwnd, num) {
         res := DllCall(this._hProcIsWindowOnDesktopNumber, "Ptr", windowHwnd, "Int", num, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to check if window is on desktop")
-        }
         return res
     }
 
     MoveWindowToDesktop(windowHwnd, num) {
         res := DllCall(this._hProcMoveWindowToDesktopNumber, "Ptr", windowHwnd, "Int", num, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to move window " windowHwnd " to desktop " num)
-        }
     }
     
     SetDesktopName(num, name) {
         name_utf8 := Buffer(1024, 0)
         StrPut(name, name_utf8, "UTF-8")
         res := DllCall(this._hProcSetDesktopName, "Int", num, "Ptr", name_utf8, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to set desktop name")
-        }
     }
 
     GetDesktopName(num) {
         utf8_buffer := Buffer(1024, 0)
         res := DllCall(this._hProcGetDesktopName, "Int", num, "Ptr", utf8_buffer, "Ptr", utf8_buffer.Size, "Int")
-        if (res == 1) {
+        if (res == 1)
             return StrGet(utf8_buffer, 1024, "UTF-8")
-        }
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to get desktop name")
-        }
         return ""
     }
 
@@ -209,9 +200,8 @@ class ClsVirtualDesktopManager {
         if (!windowHwnd)
             return false
         res := DllCall(this._hProcIsPinnedWindow, "Ptr", windowHwnd, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to check if window is pinned")
-        }
         return res
     }
 
@@ -219,27 +209,24 @@ class ClsVirtualDesktopManager {
         if (!windowHwnd)
             return
         res := DllCall(this._hProcPinWindow, "Ptr", windowHwnd, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to pin window")
-        }
     }
 
     UnpinWindow(windowHwnd) {
         if (!windowHwnd)
             return
         res := DllCall(this._hProcUnpinWindow, "Ptr", windowHwnd, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to unpin window")
-        }
     }
 
     IsPinnedApp(appWindowHwnd) {
         if (!appWindowHwnd)
             return false
         res := DllCall(this._hProcIsPinnedApp, "Ptr", appWindowHwnd, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to check if app is pinned")
-        }
         return res
     }
 
@@ -247,25 +234,22 @@ class ClsVirtualDesktopManager {
         if (!appWindowHwnd)
             return
         res := DllCall(this._hProcPinApp, "Ptr", appWindowHwnd, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to pin app")
-        }
     }
 
     UnpinApp(appWindowHwnd) {
         if (!appWindowHwnd)
             return
         res := DllCall(this._hProcUnpinApp, "Ptr", appWindowHwnd, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to unpin app")
-        }
     }
 
     CreateDesktop() {
         res := DllCall(this._hProcCreateDesktop, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to create desktop")
-        }
         this._mousePositions.Push(0)
         return res
     }
@@ -320,9 +304,8 @@ class ClsVirtualDesktopManager {
             this.SaveMousePosition(this._currentDesktop)
         
         res := DllCall(this._hProcGoToDesktopNumber, "Int", num, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to go to desktop " num)
-        }
 
         if (restoreMousePosition)
             this.RestoreMousePosition(num)
@@ -343,27 +326,22 @@ class ClsVirtualDesktopManager {
      * @param {(Boolean)} restoreMousePosition
      */
     RemoveDesktop(removeNum, goToNum:=-1, restoreMousePosition:=true) {
-        if (goToNum == -1) {
+        if (goToNum == -1)
             goToNum := this._currentDesktop
-        }
-        if (removeNum == goToNum) {
+        if (removeNum == goToNum)
             throw VirtualDesktopError("Removed desktop and go-to desktop cannot be the same: " removeNum)
-        }
-        if (removeNum < this._mousePositions.Length) {
+        if (removeNum < this._mousePositions.Length)
             this._mousePositions.RemoveAt(removeNum + 1)
-        }
-        if (goToNum > removeNum) {
+        if (goToNum > removeNum)
             goToNum--  ; Removed a desktop before this one, offset needed
-        }
         if (this._lastDesktop > removeNum) {
             this._lastDesktop--
         } else if (this._lastDesktop == removeNum) {
             this._lastDesktop := goToNum
         }
         res := DllCall(this._hProcRemoveDesktop, "Int", removeNum, "Int", goToNum, "Int")
-        if (res == -1) {
+        if (res == -1)
             throw VirtualDesktopError("Failed to remove desktop")
-        }
 
         if (restoreMousePosition)
             this.RestoreMousePosition(goToNum)
@@ -398,9 +376,8 @@ class ClsVirtualDesktopManager {
     }
 
     RegisterEventManager(eventManager) {
-        if (this._eventManager != 0) {
+        if (this._eventManager != 0)
             throw VirtualDesktopError("Event manager already registered")
-        }
         this._eventManager := eventManager
     }
 

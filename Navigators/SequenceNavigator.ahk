@@ -121,7 +121,7 @@ class ClsBaseSequenceTimedNavigator {
         if (instant) {
             selectedHwnd := this._GetSelected()
             if (selectedHwnd != 0)
-                WinActivate(selectedHwnd)
+                this._ctx.windowManager.ActivateWindow(selectedHwnd)
         }
         SetTimer(this._EndNavigation_Bind, Config.NAVIGATION_DELAY)
     }
@@ -133,7 +133,7 @@ class ClsBaseSequenceTimedNavigator {
         if (this._activateOnFinish) {
             selectedHwnd := this._GetSelected()
             if (selectedHwnd != 0)
-                WinActivate(selectedHwnd)
+                this._ctx.windowManager.ActivateWindow(selectedHwnd)
         }
         this._currentN := 1
     }

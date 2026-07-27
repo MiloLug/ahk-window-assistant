@@ -24,9 +24,6 @@ UseFlashFocusWindows(TitleFilter([
 ; Sometimes the mouse doesn't follow window focus when alt-tabbing, for example, when the desktop is focused
 UseFixMouseOnKBWindowFocus()
 
-; Consider mouse position restoration as mouse move, when switching desktops
-UseDesktopChangeAsMouseMove()
-
 
 ;; === Bindings ===
 

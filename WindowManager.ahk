@@ -2,6 +2,7 @@
 
 #include Constants.ahk
 #include Config.ahk
+#include ForegroundWatcher.ahk
 #include Navigators/SequenceNavigator.ahk
 #include Navigators/SpatialNavigator.ahk
 
@@ -41,16 +42,13 @@ class ClsWindowManager {
         this._messenger := 0
 
         this._lastMouseMoveTime := 0
-        this._watchWindowFocusWithKB := false
+        this._foregroundWatcher := 0
 
         this._freeDraggingWindowHwnd := 0
         this._freeResizingWindowHwnd := 0
 
-        this._considerDesktopChangeAsMove := false
         this._UpdateMouseMoveTime_Bind := this._UpdateMouseMoveTime.Bind(this)
         this._OnVirtualDesktopChanged_Bind := this._OnVirtualDesktopChanged.Bind(this)
-
-        this._lastDestroyTime := 0
 
         ; { windowHwnd: CountedFlagInvocation }
         this._topmostWindowsInvocations := Map()
@@ -73,7 +71,9 @@ class ClsWindowManager {
         ])
         this._navigators := Map()
         this.spatialNavigator := ClsSpatialWindowNavigator(ctx)
-        this._SetupWindowSwitchWatch_Bind := this._SetupWindowSwitchWatch.Bind(this)
+        this._SetupForegroundWatch_Bind := this._SetupForegroundWatch.Bind(this)
+        this._SetupKBFocusDerivation_Bind := this._SetupKBFocusDerivation.Bind(this)
+        this._DeriveKBFocus_Bind := this._DeriveKBFocus.Bind(this)
         this._OnShellHookMessage_Bind := this._OnShellHookMessage.Bind(this)
 
         SetTimer(this._cleanDanglingObjects_Bind, 5000)
@@ -84,6 +84,7 @@ class ClsWindowManager {
         ObjAddRef(ObjPtr(this))
         SetTimer(this._cleanDanglingObjects_Bind, 0)
         this.UnregisterEventManager()
+        this._foregroundWatcher := 0
         this._topmostWindowsInvocations.Clear()
         this._maximizedWindowsInvocations.Clear()
         this._navigators.Clear()
@@ -154,9 +155,9 @@ class ClsWindowManager {
             res := list
         }
 
-        if (detectHidden) {
+        if (detectHidden)
             DetectHiddenWindows(prevDetectHidden)
-        }
+
         return res
     }
 
@@ -187,26 +188,11 @@ class ClsWindowManager {
         return true
     }
 
-    SetConsiderDesktopChangeAsMove(consider) {
-        if (this._considerDesktopChangeAsMove == consider)
-            return
-
-        this._considerDesktopChangeAsMove := consider
-
-        if (this._eventManager == 0)
-            return
-
-        if (consider)
-            this._eventManager.On(EV_VIRTUAL_DESKTOP_CHANGED, this._OnVirtualDesktopChanged_Bind)
-        else
-            this._eventManager.Off(EV_VIRTUAL_DESKTOP_CHANGED, this._OnVirtualDesktopChanged_Bind)
-    }
-
     _OnShellHookMessage(message, id, *) {
         Critical(1)
         this._eventManager.Trigger(EV_SHELLHOOK, message, id)
 
-        mouseJustMoved := A_TickCount - this._lastMouseMoveTime < Config.MOUSE_MOVE_TIMEOUT
+        mouseJustMoved := this.MouseJustMoved()
 
         switch message {
             case HSHELL_FLASH:
@@ -214,20 +200,50 @@ class ClsWindowManager {
             case HSHELL_WINDOWCREATED:
                 this._eventManager.Trigger(EV_NEW_WINDOW, id, mouseJustMoved)
             case HSHELL_WINDOWDESTROYED:
-                this._lastDestroyTime := A_TickCount
                 this._eventManager.Trigger(EV_WINDOW_DESTROYED, mouseJustMoved)
+                ; focus falls back to another window after a destroy
+                if (this._foregroundWatcher != 0)
+                    this._foregroundWatcher.Poke()
             case HSHELL_RUDEAPPACTIVATED, HSHELL_WINDOWACTIVATED:
-                if (id != 0 && this._watchWindowFocusWithKB && !mouseJustMoved && A_TickCount - this._lastDestroyTime > 200) {
-                    Sleep(10)
-                    this._eventManager.Trigger(EV_WINDOW_FOCUSED_WITH_KB, id)
-                }
+                ; the payload id is a tmp thing - it's only a hint,
+                ; but the actual state already cold've changed
+                if (this._foregroundWatcher != 0)
+                    this._foregroundWatcher.Poke()
         }
 	}
 
-    _UpdateMouseMoveTime(*) {
-        if (A_TickCount > this._lastMouseMoveTime) {
-            this._lastMouseMoveTime := A_TickCount
+    /**
+     * @description Whether the user physically moved or clicked the mouse recently
+     * or SOMETHING happened that tells us
+     * "the user is in control of the cursor, don't mess with it"
+     * @returns {(Boolean)}
+     */
+    MouseJustMoved() {
+        return A_TickCount - this._lastMouseMoveTime < Config.MOUSE_MOVE_TIMEOUT
+    }
+
+    /**
+     * @description Activate a window
+     * This must be used instead of the default WinActivate
+     * so the internals of the window manager could know that it's an internal activation
+     * and work with that info
+     * @param {(Integer)} windowHwnd
+     */
+    ActivateWindow(windowHwnd) {
+        if (!windowHwnd)
+            return
+        if (this._foregroundWatcher != 0)
+            this._foregroundWatcher.Expect(windowHwnd)
+        try {
+            WinActivate(windowHwnd)
+        } catch {
+            OutputDebug("Failed to activate " DebugDescribeTarget(windowHwnd))
         }
+    }
+
+    _UpdateMouseMoveTime(*) {
+        if (A_TickCount > this._lastMouseMoveTime)
+            this._lastMouseMoveTime := A_TickCount
     }
 
     _OnVirtualDesktopChanged(prev, new, restoredMouse) {
@@ -235,16 +251,23 @@ class ClsWindowManager {
             this._UpdateMouseMoveTime()
     }
 
-    _SetupWindowSwitchWatch() {
-        this._watchWindowFocusWithKB := true
-
+    _SetupForegroundWatch() {
         Hotkey('~*LButton', this._UpdateMouseMoveTime_Bind)
         Hotkey('~*RButton', this._UpdateMouseMoveTime_Bind)
         Hotkey('~*MButton', this._UpdateMouseMoveTime_Bind)
         this._eventManager.On(EV_MOUSE_MOVED, this._UpdateMouseMoveTime_Bind)
+        this._eventManager.On(EV_VIRTUAL_DESKTOP_CHANGED, this._OnVirtualDesktopChanged_Bind)
 
-        if (this._considerDesktopChangeAsMove)
-            this._eventManager.On(EV_VIRTUAL_DESKTOP_CHANGED, this._OnVirtualDesktopChanged_Bind)
+        this._foregroundWatcher := ClsForegroundWatcher(this._ctx)
+    }
+
+    _SetupKBFocusDerivation() {
+        this._eventManager.On(EV_FOREGROUND_CHANGED, this._DeriveKBFocus_Bind)
+    }
+
+    _DeriveKBFocus(newHwnd, prevHwnd, mouseJustMoved) {
+        if (!mouseJustMoved)
+            this._eventManager.Trigger(EV_WINDOW_FOCUSED_WITH_KB, newHwnd)
     }
 
     RegisterEventManager(eventManager) {
@@ -257,16 +280,17 @@ class ClsWindowManager {
 
         OnMessage(this._messenger, this._OnShellHookMessage_Bind)
 
-        this._eventManager.AddLazyRegistrator(EV_WINDOW_FOCUSED_WITH_KB, this._SetupWindowSwitchWatch_Bind)
+        this._eventManager.AddLazyRegistrar(EV_FOREGROUND_CHANGED, this._SetupForegroundWatch_Bind)
+        this._eventManager.AddLazyRegistrar(EV_WINDOW_FOCUSED_WITH_KB, this._SetupKBFocusDerivation_Bind)
     }
 
     UnregisterEventManager() {
         if (this._eventManager == 0)
             return
         ; not that important if event manager is already broken or deleted
-        try {
-            this._eventManager.RemoveLazyRegistrator(EV_WINDOW_FOCUSED_WITH_KB, this._SetupWindowSwitchWatch_Bind)
-        }
+        try this._eventManager.RemoveLazyRegistrar(EV_FOREGROUND_CHANGED, this._SetupForegroundWatch_Bind)
+        try this._eventManager.RemoveLazyRegistrar(EV_WINDOW_FOCUSED_WITH_KB, this._SetupKBFocusDerivation_Bind)
+        try this._eventManager.Off(EV_FOREGROUND_CHANGED, this._DeriveKBFocus_Bind)
         this._eventManager := 0
         OnMessage(this._messenger, this._OnShellHookMessage_Bind, 0)
     }
@@ -589,5 +613,16 @@ class ClsWindowManager {
                 this._navigators[exeSelector] := ClsSequenceWindowNavigator(this._ctx, exeSelector)
             )
         }
+    }
+}
+
+
+/**
+ * @description A class to manage windows
+ * @param {(Context)} ctx - the context to use
+ * @returns {(ClsWindowManagerACTUAL)} - the window manager
+ */
+class ClsWindowManagerACTUAL {
+    __New(ctx) {
     }
 }
