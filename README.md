@@ -21,7 +21,7 @@ Everything here is super experimental/spaghetti and will probably change dramati
 
 ## What does it do?
 
-The main script (`Main.ahk`) sets up a bunch of keyboard shortcuts:
+The main script (`src/Main.ahk`) sets up a bunch of keyboard shortcuts:
 
 ### Virtual Desktop Navigation
 - `Alt + 1-9`: Jump to desktop 1-9
@@ -51,3 +51,11 @@ The main script (`Main.ahk`) sets up a bunch of keyboard shortcuts:
 #### Disclaimers
 
 Windows is a registered trademark of Microsoft Corporation. This project is not affiliated with or endorsed by Microsoft.
+
+
+#### TODO
+
+- tests are AI gen - I probably should refactor them
+- add SYSTEM runner for admin/non-admin users split
+- fix VD dll COM connection error for admin/non-admin split - right now it can't send the events, that's why there's the DLLBUG-1
+- if SYSTEM runner implemented - ensure security (?)

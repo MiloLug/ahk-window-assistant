@@ -1,10 +1,10 @@
 #Requires AutoHotkey v2.0
 
-#Include MonitorManager.ahk
-#Include WindowManager.ahk
-#Include VirtualDesktopManager.ahk
-#Include Events.ahk
-#Include MouseInput.ahk
+#Include Managers/MonitorManager.ahk
+#Include Managers/WindowManager.ahk
+#Include Managers/VirtualDesktopManager.ahk
+#Include Lib/Events.ahk
+#Include Lib/MouseInput.ahk
 
 class ClsContext {
     __New() {

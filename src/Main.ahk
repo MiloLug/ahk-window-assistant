@@ -4,9 +4,10 @@ Persistent
 InstallKeybdHook()
 SetWinDelay(10)  ; This won't affect such things as moving windows, they invoke delay 0 internally
 CoordMode("Mouse", "Screen")
-SetWorkingDir(A_ScriptDir)
+SetWorkingDir(Paths.Root)  ; repo root, not src/ - keeps cwd where it was before the src/ move
 A_MenuMaskKey := "vkE8"
 
+#Include Lib/Paths.ahk
 #Include Config.ahk
 
 #Include Core.ahk

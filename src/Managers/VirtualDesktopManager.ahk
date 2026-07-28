@@ -1,9 +1,10 @@
 ; Requires:
 ;   VirtualDesktopAccessor.dll (https://github.com/Ciantic/VirtualDesktopAccessor)
 
-#include Constants.ahk
-#include Config.ahk
-#include Utils.ahk
+#include ../Constants.ahk
+#include ../Config.ahk
+#include ../Lib/Utils.ahk
+#include ../Lib/Paths.ahk
 
 
 class VirtualDesktopError extends Error {
@@ -14,7 +15,8 @@ class ClsVirtualDesktopManager {
     __New(ctx) {
         this._ctx := ctx
 
-        dllPath := A_ScriptDir . "\VirtualDesktopAccessor.dll"
+        ; Repo root, not A_ScriptDir: the test entry point lives in tests/, the app entry in src/
+        dllPath := Paths.FromRoot("VirtualDesktopAccessor.dll")
         
         ; Check if DLL exists before attempting to load
         if (!FileExist(dllPath)) {
