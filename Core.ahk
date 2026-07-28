@@ -70,20 +70,35 @@ WinMonActivate(windowHwnd) {
     }
 }
 
+/**
+ * @description Activate a spatial-nav target, then put the mouse on the visible fragment.
+ */
+NavActivate(target) {
+    WinMonActivate(target)
+    landRect := windowManager.spatialNavigator.PopLandRect()
+    if (landRect) {
+        Geometry.RectCenter(landRect, &x, &y)
+        DllCall("SetCursorPos", "Int", x, "Int", y)
+    }
+}
+
 GoToLeftWindow() {
-    WinMonActivate(windowManager.spatialNavigator.GetLeft())
+    NavActivate(windowManager.spatialNavigator.GetLeft())
 }
 GoToRightWindow() {
-    WinMonActivate(windowManager.spatialNavigator.GetRight())
+    NavActivate(windowManager.spatialNavigator.GetRight())
 }
 GoToTopWindow() {
-    WinMonActivate(windowManager.spatialNavigator.GetTop())
+    NavActivate(windowManager.spatialNavigator.GetTop())
 }
 GoToBottomWindow() {
-    WinMonActivate(windowManager.spatialNavigator.GetBottom())
+    NavActivate(windowManager.spatialNavigator.GetBottom())
 }
-GoToNextOverlappedWindow() {
-    WinMonActivate(windowManager.spatialNavigator.NextOverlapped())
+GoDownLayer() {
+    NavActivate(windowManager.spatialNavigator.GetLayerDown())
+}
+GoUpLayer() {
+    NavActivate(windowManager.spatialNavigator.GetLayerUp())
 }
 
 SafeCloseCurrent() {

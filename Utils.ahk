@@ -1,6 +1,7 @@
 #Requires AutoHotkey v2.0
 
 #include IterUtils.ahk
+#include Constants.ahk
 
 
 /**
@@ -174,6 +175,30 @@ DebugDescribeTarget(hwnd) {
 }
 
 class WinCalls {
+    /**
+     * @description Whether a window is DWM-cloaked (other virtual desktop, suspended UWP frame etc)
+     *
+     * @param {(Integer)} windowHwnd
+     * @param {(Boolean)} onError - what value to return if the call's failed. default = true
+     * @returns {(Boolean)} - true if cloaked OR `onError` if call errored
+     */
+    static IsCloaked(windowHwnd, onError:=true) {
+        cloaked := 0
+        try {
+            hr := DllCall(
+                "dwmapi\DwmGetWindowAttribute",
+                "Ptr", windowHwnd,
+                "UInt", DWMWA_CLOAKED,
+                "UInt*", &cloaked,
+                "UInt", 4,
+                "UInt"
+            )
+        } catch {
+            return onError
+        }
+        return (onError && hr != 0) || cloaked != 0
+    }
+
     static ChangeWindowMessageFilterEx(hwnd, message, action) {
         return DllCall("ChangeWindowMessageFilterEx", "Ptr", hwnd, "UInt", message, "UInt", action, "Ptr", 0, "Int")
     }
@@ -240,7 +265,7 @@ class WinCalls {
     ) {
         rect := Buffer(16,0)
         try {
-            DllCall(
+            hr := DllCall(
                 "dwmapi\DwmGetWindowAttribute",
                 "Ptr",  windowHwnd,                  ; hwnd
                 "UInt", DWMWA_EXTENDED_FRAME_BOUNDS, ; dwAttribute
@@ -251,6 +276,9 @@ class WinCalls {
         } catch {
             return false
         }
+        ; a wrong hwnd returns E_HANDLE
+        if (hr != 0)
+            return false
 
         ; Populate the output variables
         x := NumGet(rect,  0, "Int")
