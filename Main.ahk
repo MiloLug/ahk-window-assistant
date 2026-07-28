@@ -65,7 +65,8 @@ UseFixMouseOnKBWindowFocus()
 !h::GoToLeftWindow()
 !k::GoToTopWindow()
 !j::GoToBottomWindow()
-!i::GoToNextOverlappedWindow()
+!i::GoDownLayer()
+!u::GoUpLayer()
 
 ; Navigate through all windows of the current app
 #Tab::windowManager.GetAppNavigator().Next()

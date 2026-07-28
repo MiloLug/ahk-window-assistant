@@ -74,5 +74,70 @@ class Config {
      * without an event
      */
     static FOREGROUND_EXPECT_TIMEOUT := 500
+
+    /**
+     * Below this share of visible area a window (or monitor desktop) is treated as hidden
+     * for spatial navigation
+     */
+    static NAV_MIN_VISIBLE_FRACTION := 0.05
+
+    /**
+     * Visible fragments thinner than this (px, either axis) are culled during subtraction:
+     * unusable parts must not attract directional focus. A window peeking 10px out from
+     * behind another is not a target, so the movement skips it for whatever is next
+     */
+    static NAV_MIN_FRAGMENT_DIM := 16
+
+    /**
+     * A window is still a nav target regardless of visible fraction if its largest visible
+     * fragment is at least this wide and tall (px): a 200px strip of a huge maximized window
+     * is only ~4% visible yet usable
+     */
+    static NAV_MIN_ELIGIBLE_DIM := 48
+
+    /**
+     * Perpendicular-offset weight when the candidate fragment shares the source's row/column
+     * (in-beam): mostly a gentle tiebreak, travel-axis distance dominates. A neighbor 20px
+     * left but 125px off-center scores 20 + 0.15*125 = 38.75 and beats one 500px left and
+     * perfectly centered (500) - raising this to 4.0 would change that selection
+     */
+    static NAV_MINOR_WEIGHT_INBEAM := 0.15
+
+    /**
+     * Perpendicular-offset weight for out-of-beam (diagonal) candidates: strong enough to
+     * prefer roughly-aligned targets, weak enough to keep diagonals reachable. With nothing
+     * in the beam, a target 200px away but only 182px off-axis (200 + 2*182 = 565) beats a
+     * closer one 100px away and 310px off (720)
+     */
+    static NAV_MINOR_WEIGHT_OFFBEAM := 2.0
+
+    /**
+     * Scores within this many px count as a near-tie and are resolved by focus recency (MRU)
+     * instead of raw geometry - this is what makes overlapping stacks feel predictable
+     */
+    static NAV_TIE_EPSILON := 40
+
+    /**
+     * A monitor's free-desktop fragment must be at least this wide and tall (px) to be a
+     * target - thin desktop slivers between windows are not meaningful destinations
+     */
+    static NAV_MONITOR_MIN_FRAGMENT_DIM := 200
+
+    /**
+     * Moves remembered for opposite-direction walk back (left,left then right,right returns along
+     * the same path). Small on purpose: older entries are usually stale anyway.
+     * Also bounds the layer-movement (z axis) visit chain
+     */
+    static NAV_CAMEFROM_DEPTH := 8
+
+    /**
+     * Spatial-nav MRU map size that triggers a dead-hwnd sweep; bounds memory without a timer
+     */
+    static NAV_MRU_MAX_SIZE := 64
+
+    /**
+     * Working-set bound for visibility fragments per window; bounds worst-case cascades
+     */
+    static NAV_MAX_FRAGMENTS := 16
 }
 

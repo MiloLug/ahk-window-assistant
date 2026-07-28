@@ -31,7 +31,8 @@ The main script (`Main.ahk`) sets up a bunch of keyboard shortcuts:
 - `Alt + Shift + 1-9`: Move current window to desktop 1-9
 - `Alt + Shift + 0` or `Alt + Shift + b`: Move current window to last desktop
 - `Alt + h/j/k/l`: Navigate between windows and monitors (left/down/up/right)
-- `Alt + i`: Navigate to next overlapping window
+- `Alt + u`: Go one layer down through overlapping windows
+- `Alt + i`: Go back up along the layer movement history
 - `Alt + Ctrl + C`: Close current window
 - `Alt + P`: Pin/unpin window (will appear on all desktops)
 - `Alt + Ctrl + P`: Pin window and keep it on top

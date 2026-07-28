@@ -185,7 +185,10 @@ class ClsMonitorManager {
                 return monitor
             }
         }
-        return this._monitors[MonitorGetPrimary()]
+        ; the live primary index can diff from the cached array between a topology
+        ; change and settling
+        idx := MonitorGetPrimary()
+        return this._monitors.Has(idx) ? this._monitors[idx] : this._monitors[1]
     }
 
     /**

@@ -91,9 +91,7 @@ class ClsForegroundWatcher {
 
         ; DWM-cloaked (e.g. ApplicationFrameHost transition frames):
         ; uncloaked real window arrives with the next hint or poll tick
-        cloaked := 0
-        try DllCall("dwmapi\DwmGetWindowAttribute", "Ptr", hwnd, "UInt", DWMWA_CLOAKED, "UInt*", &cloaked, "UInt", 4)
-        if (cloaked != 0)
+        if (WinCalls.IsCloaked(hwnd, onError=false))
             return
 
         prevHwnd := this._lastHwnd

@@ -178,7 +178,11 @@ class ClsWindowManager {
         if (!(style & WS_VISIBLE) || (style & WS_DISABLED))
             return false
 
-        style := WinGetExStyle(hwnd)
+        try {
+            style := WinGetExStyle(hwnd)
+        } catch {
+            return false
+        }
         if (style & WS_EX_TOOLWINDOW)
             return false
 
