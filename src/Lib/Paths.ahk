@@ -17,5 +17,5 @@ class Paths {
      * @param {(String)} relative e.g. "some\path" -> "<repo root path>\some\path"
      * @returns {(String)} full path
      */
-    static FromRoot(relative) => Paths.Root . "\" . relative
+    static FromRoot(relative) => Paths.Root . "\" . Trim(relative, "\")
 }
