@@ -10,12 +10,12 @@ It's basically my way of not going insane after completely switching to Windows.
 
 ## ⚠️ NOT READY YET
 
-Everything here is super experimental/spaghetti and will probably change dramatically. Don't expect stability - this is more of a "works on my machine" situation right now.
+Some parts here are super experimental and will probably change. This is more of a "works on my machine" situation right now, but I think it should work on most win11 machines.
 
 ### Requirements (my actual machine)
 
 - Windows 11 22H2+
-- [VirtualDesktopAccessor.dll](https://github.com/Ciantic/VirtualDesktopAccessor)
+- [VirtualDesktopAccessor.dll](https://github.com/Ciantic/VirtualDesktopAccessor) - download and place in the repo root
 - Enabled 'focus follows mouse' WITHOUT raising focused windows
 - 'Virtual Desktop Preserve Taskbar Order' in Windhawk (recommended)
 
