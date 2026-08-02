@@ -14,6 +14,7 @@
 ; A new case file needs one #Include line below - #Include is compile-time, AHK has no globbing.
 
 #Include TestCore.ahk
+#Include cases/IniUtils.ahk
 #Include cases/NavScenarios.ahk
 
 CoordMode("Mouse", "Screen")
