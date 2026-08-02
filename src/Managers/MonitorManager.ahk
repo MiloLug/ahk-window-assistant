@@ -1,9 +1,9 @@
 #Requires AutoHotkey v2.0
 
-#include IterUtils.ahk
-#include Geometry.ahk
-#include Constants.ahk
-#include Config.ahk
+#include ../Lib/IterUtils.ahk
+#include ../Lib/Geometry.ahk
+#include ../Constants.ahk
+#include ../Config.ahk
 
 
 class ClsMonitor {

@@ -1,10 +1,10 @@
 #Requires AutoHotkey v2.0
 
-#include Constants.ahk
-#include Config.ahk
-#include ForegroundWatcher.ahk
-#include Navigators/SequenceNavigator.ahk
-#include Navigators/SpatialNavigator.ahk
+#include ../Constants.ahk
+#include ../Config.ahk
+#include ../Lib/ForegroundWatcher.ahk
+#include ../Navigators/SequenceNavigator.ahk
+#include ../Navigators/SpatialNavigator.ahk
 
 class ClsWindowManagerError extends Error {
     __New(message) {

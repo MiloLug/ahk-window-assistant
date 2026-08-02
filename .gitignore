@@ -1,3 +1,6 @@
 *.dll
 DebugRun.ahk
 CLAUDE.md
+.claude
+/notes
+/config.ini

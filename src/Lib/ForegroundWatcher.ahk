@@ -1,7 +1,7 @@
 #Requires AutoHotkey v2.0
 
-#include Constants.ahk
-#include Config.ahk
+#include ../Constants.ahk
+#include ../Config.ahk
 
 /**
  * @description Foreground window change watcher.

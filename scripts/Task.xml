@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Runs the AHK window manager as SYSTEM inside the interactive session at logon. Registered by AhkWindowAssistant.</Description>
+  </RegistrationInfo>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-18</UserId>
+    </Principal>
+  </Principals>
+  <Settings>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <Enabled>true</Enabled>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Hidden>false</Hidden>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <Priority>4</Priority>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <StartWhenAvailable>false</StartWhenAvailable>
+    <WakeToRun>false</WakeToRun>
+    <IdleSettings>
+      <StopOnIdleEnd>false</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <RestartOnFailure>
+      <Interval>PT1M</Interval>
+      <Count>3</Count>
+    </RestartOnFailure>
+  </Settings>
+  <Triggers>
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+  </Triggers>
+  <Actions Context="Author">
+    <Exec>
+      <Command>{{AHK_EXE}}</Command>
+      <Arguments>"{{LAUNCHER}}"</Arguments>
+      <WorkingDirectory>{{DEST}}</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>

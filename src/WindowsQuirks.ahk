@@ -1,7 +1,7 @@
 #Requires AutoHotkey v2.0
 
 #Include Core.ahk
-#Include Utils.ahk
+#Include Lib/Utils.ahk
 
 /**
  * @description Fix mouse sometimes not following window focus when alt-tabbing,

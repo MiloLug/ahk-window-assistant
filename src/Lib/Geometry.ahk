@@ -1,6 +1,6 @@
 #Requires AutoHotkey v2.0
 
-#include Config.ahk
+#include ../Config.ahk
 
 
 class Geometry {

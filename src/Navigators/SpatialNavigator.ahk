@@ -2,8 +2,8 @@
 
 #include ../Config.ahk
 #include ../Constants.ahk
-#include ../Utils.ahk
-#include ../Geometry.ahk
+#include ../Lib/Utils.ahk
+#include ../Lib/Geometry.ahk
 
 
 /**

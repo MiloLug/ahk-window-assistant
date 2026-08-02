@@ -10,18 +10,18 @@ It's basically my way of not going insane after completely switching to Windows.
 
 ## ⚠️ NOT READY YET
 
-Everything here is super experimental/spaghetti and will probably change dramatically. Don't expect stability - this is more of a "works on my machine" situation right now.
+Some parts here are super experimental and will probably change. This is more of a "works on my machine" situation right now, but I think it should work on most win11 machines.
 
 ### Requirements (my actual machine)
 
 - Windows 11 22H2+
-- [VirtualDesktopAccessor.dll](https://github.com/Ciantic/VirtualDesktopAccessor)
+- [VirtualDesktopAccessor.dll](https://github.com/Ciantic/VirtualDesktopAccessor) - download and place in the repo root
 - Enabled 'focus follows mouse' WITHOUT raising focused windows
 - 'Virtual Desktop Preserve Taskbar Order' in Windhawk (recommended)
 
 ## What does it do?
 
-The main script (`Main.ahk`) sets up a bunch of keyboard shortcuts:
+The main script (`src/Main.ahk`) sets up a bunch of keyboard shortcuts:
 
 ### Virtual Desktop Navigation
 - `Alt + 1-9`: Jump to desktop 1-9
@@ -48,6 +48,22 @@ The main script (`Main.ahk`) sets up a bunch of keyboard shortcuts:
 - Some fixes for mouse following new windows and keyboard focus (alt-tab)
 
 
+## Autostart (optional)
+
+If your main account isn't an admin, you'll need to run the WM somehow with the elevation, so it could manage admin-created windows (programs you run "As Administrator").
+You can read docs\elevation.md if interested, but briefly:
+
+- copy `config.example.ini` to `config.ini`
+- set some values you may want to change
+- run the setup script: `pwsh -File scripts\Setup.ps1 -Start`
+  
+  You don't have to run pwsh or cmd as admin - the script will ask for admin rights itself.
+
 #### Disclaimers
 
 Windows is a registered trademark of Microsoft Corporation. This project is not affiliated with or endorsed by Microsoft.
+
+#### TODO
+
+- tests are AI gen - I probably should refactor them
+- fix VD dll COM connection error for admin/non-admin split - right now it can't send the events, that's why there's the DLLBUG-1
